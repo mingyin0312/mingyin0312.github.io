@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
-<title>Ming  Yin | Ming Yin's Blog</title>
+<title>Ming  Yin | Why can't we surpass the speed of light? Einstein tells you</title>
 <meta name="description" content="Personal page for Ming Yin
 ">
 
@@ -29,7 +29,7 @@
 <link rel="shortcut icon" href="/assets/img/favicon.ico">
 <link rel="stylesheet" href="/assets/css/main.css">
 
-<link rel="canonical" href="/blog/">
+<link rel="canonical" href="/blog/2021/massive-energy/">
 
 <!-- JQuery -->
 <!-- jQuery -->
@@ -162,68 +162,146 @@
     <!-- Content -->
 
     <div class="container mt-5">
-      <div class="post">
+      
 
-  <div class="header-bar">
-    <h1>Ming Yin's Blog</h1>
-    <h2>A place to explain and share my ideas and thoughts</h2>
-  </div>
+<div class="post">
+
+  <header class="post-header">
+    <h1 class="post-title">Why can't we surpass the speed of light? Einstein tells you</h1>
+    <p class="post-meta">March 3, 2021</p>
+  </header>
+
+  <article class="post-content">
+    <p>Why can’t we travel faster than the speed of light? Einstein explained this pheonmenon through his famous equation</p>
+
+<p>\begin{equation}\label{eqn:mass}
+m=\frac{m_0}{\sqrt{1-(\frac{v}{c})^2}},
+\end{equation}</p>
+
+<p>which is the last of his four celebrated works in 1905 (Albert Einstein’s Year of Miracles) titled <a href="https://einsteinpapers.press.princeton.edu/vol2-trans/186">Does the inertia of a body depend on its energy content?</a>. This paper entails arguably the most famous formula so far: <a href="https://en.wikipedia.org/wiki/Mass–energy_equivalence">Mass-Energy Equivalence</a></p>
+
+\[E=mc^2.\]
+
+<p>From \eqref{eqn:mass}, when the velocity of a particle approaches \(c\), the relative mass \(m\) will goes to \(\infty\). Therefore any particle with \(m_0&gt;0\) can never exceed the speed of light.</p>
+
+<p>For the rest of the post, we use high school physics to proof these famous results!</p>
+
+<hr />
+
+<h3 id="1-review-from-high-school-physics-materials">1. Review from high school physics materials</h3>
+<ul>
+    <li>Momentum Conservation Principle (动量守恒定律): For a system (with two objectives) has 0 momentum, it always holds:
+    	\begin{equation}\label{eqn:mon}
+  		0=P_1-P_2=m_1v_1-m_2v_2,
+  		\end{equation}
+    	multiply both sides by time t, we further have 
+    	\begin{equation}\label{eqn:mon_s}
+    	0=m_1S_1-m_2S_2.
+    	\end{equation}
+   </li>
+    <li>
+    Electromagnetic waves: 
+    \begin{equation}\label{eqn:egw}
+    E=Pc
+    \end{equation}	
+    </li>
+    <li>
+    	Theorem of Momentum:
+    	\begin{equation}\label{eqn:tom}
+    		dW=Fdx=dE,\quad F=\frac{dP}{dt}.
+    	\end{equation}
+	</li>
+</ul>
+
+<hr />
+
+<h3 id="2-proof-of-emc2">2. Proof of \(E=mc^2\)</h3>
+
+<p><strong>Einstein’s Thought Experiment.</strong> Imagine there is a box with length \(L\), a photon with energy \(E\) goes from one side to the other side. Consider the system of photon and the box.</p>
+
+<p>By \eqref{eqn:egw},</p>
+
+<p>\begin{equation}
+P_1=\frac{E}{c}
+\end{equation}</p>
+
+<p>then by \eqref{eqn:mon},</p>
+
+<p>\begin{equation}
+P_2=P_1=\frac{E}{c}.
+\end{equation}</p>
+
+<p>Then by the definition of momentum \eqref{eqn:mon}</p>
+
+<p>\begin{equation}
+v_{\text{box}}=\frac{P_2}{m_2}=\frac{E}{m_2c}.
+\end{equation}</p>
+
+<p>On the other hand, for photon \(s_1\approx L\), then for box we have</p>
+
+<p>\begin{equation}
+s_2=v_{\text{box}}\cdot t=\frac{E}{m_2c}\cdot t=\frac{E}{m_2c}\cdot \frac{L}{c}
+\end{equation}</p>
+
+<p>Let the mass of photon be \(m\), then by Momentum Conservation Principle,</p>
+
+<p>\begin{equation}
+mL-m_2\cdot \frac{EL}{m_2c^2}=0
+\end{equation}</p>
+
+<p>Which gives</p>
+
+\[E=mc^2.\]
+
+<p>This can be generalize to not only photon but all particles!</p>
+
+<p>Quite easy! Right?</p>
+
+<hr />
+
+<h3 id="proof-of-mm_0sqrt1-fracvc2">Proof of \(m={m_0}/{\sqrt{1-(\frac{v}{c})^2}}\)</h3>
+
+<p>Recall \(E=mc^2\), \(P=mv\), hence</p>
+
+<p>\begin{equation}\label{eqn:inter}
+\frac{E}{P}=\frac{c^2}{v}\Rightarrow E=\frac{Pc^2}{v}.
+\end{equation}</p>
+
+<p>Now by \eqref{eqn:tom},</p>
+
+<p>\begin{equation}
+	dE=Fdx=\frac{dP}{dt}dx=v\cdot dP,
+\end{equation}
+multiply above by \eqref{eqn:inter}, then</p>
+
+\[EdE=\frac{Pc^2}{v}\cdot v\cdot dP=Pc^2\cdot dP.\]
+
+<p>Take integral, we obtian</p>
+
+\[E^2=c^2P^2+const.\]
+
+<p>When \(P=0\), \(E=E_0=m_0c^2\). Therefore we already derived</p>
+
+<p>\begin{equation}\label{eqn:final}
+E^2=c^2P^2+m_0^2c^4
+\end{equation}</p>
+
+<p>In particular, for photon, by \eqref{eqn:egw} \(E=Pc\), which implies the invariant mass (光子的静止质量) \(m_0=0\)! This simly says: <strong>For any pariticle that has positive invariant mass, it cannot achieve the speed of light!</strong></p>
+
+<p>Finally, use \eqref{eqn:inter}, we have \(P=\frac{Ev}{c^2}\), plug in \eqref{eqn:final} to obtain</p>
+
+\[E^2=E^2\frac{v^2}{c^2}+m_0^2c^4\Rightarrow E=\frac{m_0c^2}{\sqrt{1-\frac{v^2}{c^2}}}.\]
+
+<p>Again, use \(E=mc^2\), we obtain</p>
+
+\[m=\frac{m_0}{\sqrt{1-(\frac{v}{c})^2}}.\]
+
+<p>That’s it! Now you know why \(c\) is the fastest speed we can get!</p>
 
 
-  <ul class="post-list">
-    
-      <li>
-        <h3><a class="post-title" href="/blog/2021/unified-offline-rl/">Optimal offline RL with the unified model-based framework</a></h3>
-        <p class="post-meta">June 24, 2021</p>
-        <p>A model-based framework + singleton absorbing MDP technique achieves the optimal rate for several challenging offline tasks.</p>
-      </li>
-    
-      <li>
-        <h3><a class="post-title" href="/blog/2021/bandit/">A Brief Summary of Upper Bounds for Bandit Problems</a></h3>
-        <p class="post-meta">April 27, 2021</p>
-        <p>This post summarizes the regret analysis of the Exploration-First Algorithm, the Upper Confidence Bound (UCB) Algorithm for the multi-armed bandits (MAB) problems and the LinUCB Algorithm for linear Bandits.</p>
-      </li>
-    
-      <li>
-        <h3><a class="post-title" href="/blog/2021/influence-function/">A Brief Introduction to Influence Funtion Technique</a></h3>
-        <p class="post-meta">March 15, 2021</p>
-        <p>Influence function technique is powerful in that it provides a way to calculate efficiency bound for the semiparameteric estimation problems.</p>
-      </li>
-    
-      <li>
-        <h3><a class="post-title" href="/blog/2021/doubleVR/">Variance Reduction Technique for Optimal Offline RL</a></h3>
-        <p class="post-meta">March 4, 2021</p>
-        <p>A algorithm that achieves Minimax rate for tabular RL</p>
-      </li>
-    
-      <li>
-        <h3><a class="post-title" href="/blog/2021/massive-energy/">Why can't we surpass the speed of light? Einstein tells you</a></h3>
-        <p class="post-meta">March 3, 2021</p>
-        <p>Only senior high school knowledge is needed to understand this pheonmenon!</p>
-      </li>
-    
-  </ul>
+  </article>
 
   
-<nav aria-label="Blog page naviation">
-  <ul class="pagination pagination-lg justify-content-center">
-    <li class="page-item disabled">
-      <a class="page-link" href="" tabindex="-1" aria-disabled="">Newer</a>
-    </li>
-    
-      
-        <li class="page-item active"><a class="page-link" href="/blog/index.html" title="Ming Yin's Blog">1</a></li>
-      
-        <li class="page-item "><a class="page-link" href="/blog/page/2/index.html" title="Ming Yin's Blog - page 2">2</a></li>
-      
-    
-    <li class="page-item ">
-      <a class="page-link" href="/blog/page/2/">Older</a>
-    </li>
-  </ul>
-</nav>
-
-
 
 </div>
 
