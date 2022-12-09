@@ -1,11 +1,11 @@
 ---
 layout: page
-title: projects
+title: Miscellaneous
 permalink: /projects/
-description: A growing collection of your cool projects.
+description: I use this page to record all the fun and interesting things I have seen! 
 nav: true
 nav_order: 2
-display_categories: [work, fun]
+#display_categories: [work, fun]
 horizontal: false
 ---
 

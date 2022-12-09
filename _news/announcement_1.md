@@ -1,7 +1,7 @@
 ---
 layout: post
-date: 2015-10-22 15:59:00-0400
+date: 2021-01-28
 inline: true
 ---
 
-A simple inline announcement.
+Oral acceptance of [Uniform OPE](http://proceedings.mlr.press/v130/yin21a.html){:target="\_blank"} paper to AISTATS-2021! :sparkles: :smile:  
