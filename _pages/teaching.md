@@ -15,6 +15,16 @@ nav: true
 
 <br>
 
+
+**Institute for Foundations of Data Science at Yale**
+
+<ul>
+    <li>
+        <sup>(2023/1)</sup> Invited talk at the Institute for Foundations of Data Science at Yale University about my work on offline Reinforcement Learning. Thanks <a href="https://en.wikipedia.org/wiki/Daniel_Spielman">Dan Spielman</a> for the kind invitation! 
+   </li>
+</ul>
+
+
 **Big Data and Machine Learning Seminar at UCLA**
 
 <ul>
