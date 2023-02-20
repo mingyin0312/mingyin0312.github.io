@@ -16,6 +16,17 @@ nav: true
 <br>
 
 
+**Information Theory and Applications Workshop at San Diego**
+
+<ul>
+    <li>
+        <sup>(2023/2)</sup> Invited talk at the <a href="https://ita.ucsd.edu/workshop/">Information Theory and Applications Workshop</a> at San Diego. Thanks ITA for the kind invitation!
+   </li>
+</ul>
+
+
+
+
 **Institute for Foundations of Data Science at Yale**
 
 <ul>
@@ -23,6 +34,8 @@ nav: true
         <sup>(2023/1)</sup> Invited talk at the Institute for Foundations of Data Science at Yale University about my work on offline Reinforcement Learning. Thanks <a href="https://en.wikipedia.org/wiki/Daniel_Spielman">Dan Spielman</a> for the kind invitation! 
    </li>
 </ul>
+
+
 
 
 **Big Data and Machine Learning Seminar at UCLA**
