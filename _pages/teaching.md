@@ -16,11 +16,22 @@ nav: true
 <br>
 
 
+**The 68th TrustML Young Scientist Seminar at RIKEN**
+
+<ul>
+    <li>
+        <sup>(2023/04)</sup> Invited talk at the <a href="https://trustmlresearch.github.io">The TrustML Young Scientist Seminar</a> at <a href="https://www.riken.jp/en/research/labs/aip/">RIKEN</a>. Thanks Director <a href="https://scholar.google.com/citations?user=GkYIrlIAAAAJ">Masashi Sugiyama</a> for the kind invitation!
+   </li>
+</ul>
+
+
+
+
 **Information Theory and Applications Workshop at San Diego**
 
 <ul>
     <li>
-        <sup>(2023/2)</sup> Invited talk at the <a href="https://ita.ucsd.edu/workshop/">Information Theory and Applications Workshop</a> at San Diego. Thanks ITA for the kind invitation!
+        <sup>(2023/02)</sup> Invited talk at the <a href="https://ita.ucsd.edu/workshop/">Information Theory and Applications Workshop</a> at San Diego. Thanks ITA for the kind invitation!
    </li>
 </ul>
 
@@ -31,7 +42,7 @@ nav: true
 
 <ul>
     <li>
-        <sup>(2023/1)</sup> Invited talk at the Institute for Foundations of Data Science at Yale University about my work on offline Reinforcement Learning. Thanks <a href="https://en.wikipedia.org/wiki/Daniel_Spielman">Dan Spielman</a> for the kind invitation! 
+        <sup>(2023/01)</sup> Invited talk at the Institute for Foundations of Data Science at Yale University about my work on offline Reinforcement Learning. Thanks <a href="https://en.wikipedia.org/wiki/Daniel_Spielman">Dan Spielman</a> for the kind invitation! 
    </li>
 </ul>
 
@@ -42,7 +53,7 @@ nav: true
 
 <ul>
     <li>
-    	<sup>(2022/4)</sup> Invited talk at Department of Computer Science, University of California, Los Angeles (UCLA) about my recent work on Instance-depedent offline Reinforcement Learning! See slides <a href="/assets/pdf/Instance_dependent_OfflineRL_04_22_UCLA.pdf">here</a>! 
+    	<sup>(2022/04)</sup> Invited talk at Department of Computer Science, University of California, Los Angeles (UCLA) about my recent work on Instance-depedent offline Reinforcement Learning! See slides <a href="/assets/pdf/Instance_dependent_OfflineRL_04_22_UCLA.pdf">here</a>! 
    </li>
 </ul>
 
