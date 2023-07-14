@@ -16,11 +16,20 @@ nav: true
 <br>
 
 
+**AI Seminar at AI TIME**
+
+<ul>
+    <li>
+        <sup>(2023/06)</sup> Invited talk at <a href="https://www.aitime.cn">AI TIME</a> at Tsinghua University. Thanks for the kind invitation!
+   </li>
+</ul>
+
+
 **The 68th TrustML Young Scientist Seminar at RIKEN**
 
 <ul>
     <li>
-        <sup>(2023/04)</sup> Invited talk at the <a href="https://trustmlresearch.github.io">The TrustML Young Scientist Seminar</a> at <a href="https://www.riken.jp/en/research/labs/aip/">RIKEN</a>. Thanks Director <a href="https://scholar.google.com/citations?user=GkYIrlIAAAAJ">Masashi Sugiyama</a> for the kind invitation!
+        <sup>(2023/04)</sup> Invited talk at <a href="https://trustmlresearch.github.io">The TrustML Young Scientist Seminar</a> at <a href="https://www.riken.jp/en/research/labs/aip/">RIKEN</a>. Thanks Director <a href="https://scholar.google.com/citations?user=GkYIrlIAAAAJ">Masashi Sugiyama</a> for the kind invitation!
    </li>
 </ul>
 

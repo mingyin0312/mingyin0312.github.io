@@ -21,7 +21,10 @@ social: true  # includes social icons at the bottom of the page
 University of Science and Technology of China](http://math.ustc.edu.cn/ENGLISH/list.htm){:target="\_blank"}. I have also spent time at Princeton University and Amazon AWS AI Research.
 
 
+<!---
 I am fond of the broad area of machine learning, e.g. reinforcement learning, large scale optimization and statistics. My current research primarily focuses on building statistical foundations for offline reinforcement learning. I enjoy understanding the theoretical ground of different algorithms that are of practical importance. Recently, I start to think about how to appropriately apply deep models to make RL practical. I am on the job market.
+-->
+
 
 
 The primary goal of the webpage is to share my thoughts and summarize the ideas of my research and some topics I am interested in. Please check the `Blog` page! For the list of papers, go to [Publications](/publications) page.

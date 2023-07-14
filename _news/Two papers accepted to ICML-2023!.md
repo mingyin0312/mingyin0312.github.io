@@ -9,7 +9,7 @@ inline: false
 
 Topics are: 
 
- * <a href="" target="blank">Adversarial/non-stationary RL with general function approximation </a>;
+ * <a href="https://arxiv.org/abs/2306.00861" target="blank">Adversarial/non-stationary RL with general function approximation </a>;
 
  * <a href="https://arxiv.org/pdf/2211.15956.pdf" target="blank">Deep Offline Reinforcement Learning </a>.
 
