@@ -1,9 +1,12 @@
 ---
 layout: post
-date: 2023-07-13
+date: 2023-08-10
 inline: true
 ---
 
-**I'll attend [ICML-23](https://icml.cc/Conferences/2023){:target="\_blank"} (Jul. 24 - 29) at Honolulu, Hawaii!** Free feel to contact me there!
+Happy to be part of the PC for [AI4science WS](https://ai4sciencecommunity.github.io/neurips23.html){:target="\_blank"} and review for [EMNLP23](https://2023.emnlp.org){:target="\_blank"}.
+
+
+
 
 

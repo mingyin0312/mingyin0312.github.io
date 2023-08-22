@@ -17,8 +17,15 @@ selected_papers: true # includes a list of papers marked as "selected={true}"
 social: true  # includes social icons at the bottom of the page
 ---
 
-:smiley: I am a PhD student with the [Department of Computer Science](https://www.cs.ucsb.edu/){:target="\_blank"} and the [Department of Statistics and Applied Probability](https://www.pstat.ucsb.edu/){:target="\_blank"} at UC, Santa Barbara, in the Statistical Machine Learning group, advised by [Dr. Yu-Xiang Wang](https://sites.cs.ucsb.edu/~yuxiangw/){:target="\_blank"}. I am also co-advised by [Dr. J.S. Rao](http://jammalam.faculty.pstat.ucsb.edu){:target="\_blank"}. I am currently pursuing PhDs in both Departments. Prior to UCSB, I got my B.S. from [Applied Math at 
-University of Science and Technology of China](http://math.ustc.edu.cn/ENGLISH/list.htm){:target="\_blank"}. I have also spent time at Princeton University and Amazon AWS AI Research.
+Incoming Postdoctoral Associate at [Princeton ECE](https://ece.princeton.edu){:target="\_blank"}
+
+Ph.D., UC Santa Barbara, [Department of Computer Science](https://www.cs.ucsb.edu/){:target="\_blank"}, 2023
+
+Ph.D., UC Santa Barbara, [Department of Statistics and Applied Probability](https://www.pstat.ucsb.edu/){:target="\_blank"}, 2023
+
+
+Prior to my graduate study, I got my B.S. from [Applied Math at 
+University of Science and Technology of China (USTC)](http://math.ustc.edu.cn/ENGLISH/list.htm){:target="\_blank"}. I have also spent time at Amazon AWS AI Research.
 
 
 <!---
