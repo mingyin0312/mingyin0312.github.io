@@ -9,8 +9,8 @@ profile:
   image_circular: true # crops the image to make it circular
   address: >
     <p></p>
-    <p></p>
-    <p> mingyin0312 at gmail dot com</p>
+    <p>    304 Friend Center </p>
+    <p> my0049@princeton.edu </p>
 
 news: true  # includes a list of news items
 selected_papers: true # includes a list of papers marked as "selected={true}"
