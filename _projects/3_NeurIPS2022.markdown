@@ -2,7 +2,7 @@
 layout: page
 title: NeurIPS at New Orleans
 description: Downtown New Orleans in December! 
-img: /assets/img/ICML2022/the_street.jpg
+img: /assets/img/neurips2022/Delle-E.png
 importance: 1
 ---
 
