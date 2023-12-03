@@ -2,7 +2,7 @@
 layout: page
 title: ICML at Baltimore
 description: Downtown Baltimore in the summer! 
-img: /assets/img/ICML2022/the_street.jpg
+img: /assets/img/ICML2022/ICML.png
 importance: 1
 ---
 

@@ -2,7 +2,7 @@
 layout: page
 title: Santa Barbara View 
 description: A collection of nice views in Carlifornia, Santa Barbara.
-img: /assets/img/SB_view/SB_hike.jpg
+img: /assets/img/SB_view/SB.png
 importance: 1
 ---
 
