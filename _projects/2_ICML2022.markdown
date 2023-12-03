@@ -1,12 +1,12 @@
 ---
 layout: page
-title: ITA at San Diego
-description: Downtown San Diego at the Bay! 
+title: ICML at Baltimore
+description: Downtown Baltimore in the summer! 
 img: /assets/img/ICML2022/the_street.jpg
 importance: 1
 ---
 
-The 2023 Information Theory and ApplicationsWorkshop (ITA) took place at downtown San Diego, CA. My first time for attending ITA :) 
+The 2022 Interantional Conference at Machine Learning (ICML) took place at downtown Baltimore, Maryland. Visited a lot of fun places :) 
 
 
 
@@ -16,7 +16,7 @@ The 2023 Information Theory and ApplicationsWorkshop (ITA) took place at downtow
     authors: Kamil Ciosek, Quan Vuong, Robert Loftin and Katja Hofmann
     ------------------------------------------------------------------
  -->
- <div class="row">
+<div class="row">
     <div class="col-sm mt-3 mt-md-0">
         <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/ICML2022/guitar.jpg' | relative_url }}" alt="" title="Guitar"/>
     </div>
@@ -93,6 +93,3 @@ Here's the code for the last row of images above:
 
 
  -->
-
-
-

@@ -1,14 +1,12 @@
 ---
 layout: page
-title: ITA at San Diego
-description: Downtown San Diego at the Bay! 
-img: /assets/img/ICML2022/the_street.jpg
+title: Santa Barbara View 
+description: A collection of nice views in Carlifornia, Santa Barbara.
+img: /assets/img/SB_view/SB_hike.jpg
 importance: 1
 ---
 
-The 2023 Information Theory and ApplicationsWorkshop (ITA) took place at downtown San Diego, CA. My first time for attending ITA :) 
-
-
+Santa Barbara has a very beautiful landscape. There are many sceneries to enjoy:
 
   <!--   ------------------------------------------------------------------
     title: Better Exploration with Optimistic Actor-Critic
@@ -16,25 +14,28 @@ The 2023 Information Theory and ApplicationsWorkshop (ITA) took place at downtow
     authors: Kamil Ciosek, Quan Vuong, Robert Loftin and Katja Hofmann
     ------------------------------------------------------------------
  -->
- <div class="row">
+<div class="row">
     <div class="col-sm mt-3 mt-md-0">
-        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/ICML2022/guitar.jpg' | relative_url }}" alt="" title="Guitar"/>
+        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/SB_view/UCSB_lagoon.JPG' | relative_url }}" alt="" title="UCSB lagoon"/>
     </div>
     <div class="col-sm mt-3 mt-md-0">
-        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/ICML2022/hotel_are.jpg' | relative_url }}" alt="" title="Hotels"/>
+        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/SB_view/UCSB_sports_field.jpg' | relative_url }}" alt="" title="UCSB sports field"/>
+    </div>
+    <div class="col-sm mt-3 mt-md-0">
+        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/SB_view/SB_hike.jpg' | relative_url }}" alt="" title="SB hike"/>
     </div>
 </div>
 <div class="caption">
-    On the left, Power Plant. Right, the hotels in downtown Baltimore.
+    On the left, UCSB Lagoon. Middle, the UCSB sports field (where I run a lot). Right, a hiking view from the Inspiration Point.
 </div>
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
-        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/ICML2022/overlook_Baltimore.JPG' | relative_url }}" alt="" title="overlook"/>
+        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/SB_view/UCSB_beach.JPG' | relative_url }}" alt="" title="UCSB beach"/>
     </div>
 </div>
 <div class="caption">
-    An overlook of the Baltimore city.
+    An ocean view from UCSB campus. There are two people playing frisbee!
 </div>
 
 
@@ -42,32 +43,22 @@ The 2023 Information Theory and ApplicationsWorkshop (ITA) took place at downtow
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
-        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/ICML2022/inner_harbor.jpg' | relative_url }}" alt="" title="inner harbor"/>
+        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/SB_view/OldMission_SB.jpg' | relative_url }}" alt="" title="OldMission SB"/>
     </div>
 </div>
 <div class="caption">
-    Inner Harbor of Baltimore. It's just so good!
-</div>
-
-
-<div class="row">
-    <div class="col-sm mt-3 mt-md-0">
-        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/ICML2022/inner_harbor_2.jpg' | relative_url }}" alt="" title="inner harbor 2"/>
-    </div>
-</div>
-<div class="caption">
-    Inner Harbor of Baltimore (continued).
+    Santa Barbara Old Mission.
 </div>
 
 
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
-        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/ICML2022/the_street.jpg' | relative_url }}" alt="" title="the street view"/>
+        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/SB_view/SB_Ocean.jpg' | relative_url }}" alt="" title="SB Ocean"/>
     </div>
 </div>
 <div class="caption">
-    Baltimore downtown street view.
+    An ocean view from SB Downtown Harbor. It's like magic.
 </div>
 
 Hope you like it!
@@ -93,6 +84,3 @@ Here's the code for the last row of images above:
 
 
  -->
-
-
-
