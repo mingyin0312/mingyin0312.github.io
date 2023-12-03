@@ -15,6 +15,14 @@ nav: true
 
 <br>
 
+**2023 Informs Annual Meeting**
+
+<ul>
+    <li>
+        <sup>(2023/10)</sup> Invited for a community committee choice session talk at <a href="https://meetings.informs.org/wordpress/phoenix2023/">2023 Informs Annual Meeting</a> at Phoenix about Offline RL. Thanks <a href="https://asu.mit.edu">Prof. Asu Ozdaglar</a> and  <a href="https://kzhang66.github.io">Prof. Kaiqing Zhang</a> for the kind invitation!
+   </li>
+</ul>
+
 
 **AI Seminar at AI TIME**
 
@@ -92,9 +100,9 @@ nav: true
 
 <br>
 
-#### Early Research Scholar Program (ERSP) at UCSB
+#### Early Research Scholar Program (ERSP) 
 
-I am mentoring an undergraduate team of 4 students of Early Research Scholar Program (ERSP) at UCSB for empirical benchmarking of offline policy learning methods for Reinforcement Learning. For an initial description of this program, see <a href="https://ersp.cs.ucsb.edu/2020-2021-projects/group-4-20202021">here</a>.
+I am mentoring an undergraduate team of 4 students of Early Research Scholar Program (ERSP) at UC, Santa Barbara for empirical benchmarking of offline policy learning methods for Reinforcement Learning. For an initial description of this program, see <a href="https://ersp.cs.ucsb.edu/2020-2021-projects/group-4-20202021">here</a>.
 
 
 
