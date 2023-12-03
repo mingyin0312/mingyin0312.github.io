@@ -16,61 +16,61 @@ The 2023 Information Theory and ApplicationsWorkshop (ITA) took place at downtow
     authors: Kamil Ciosek, Quan Vuong, Robert Loftin and Katja Hofmann
     ------------------------------------------------------------------
  -->
- <div class="row">
-    <div class="col-sm mt-3 mt-md-0">
-        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/ICML2022/guitar.jpg' | relative_url }}" alt="" title="Guitar"/>
-    </div>
-    <div class="col-sm mt-3 mt-md-0">
-        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/ICML2022/hotel_are.jpg' | relative_url }}" alt="" title="Hotels"/>
-    </div>
-</div>
-<div class="caption">
-    On the left, Power Plant. Right, the hotels in downtown Baltimore.
-</div>
+ 
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
-        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/ICML2022/overlook_Baltimore.JPG' | relative_url }}" alt="" title="overlook"/>
+        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/ita2023/1.JPG' | relative_url }}" alt="" title="overlook"/>
     </div>
 </div>
 <div class="caption">
-    An overlook of the Baltimore city.
-</div>
-
-
-
-
-<div class="row">
-    <div class="col-sm mt-3 mt-md-0">
-        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/ICML2022/inner_harbor.jpg' | relative_url }}" alt="" title="inner harbor"/>
-    </div>
-</div>
-<div class="caption">
-    Inner Harbor of Baltimore. It's just so good!
+    The Skyscrapers near the Bay. 
 </div>
 
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
-        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/ICML2022/inner_harbor_2.jpg' | relative_url }}" alt="" title="inner harbor 2"/>
+        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/ita2023/2.JPG' | relative_url }}" alt="" title="overlook"/>
     </div>
 </div>
 <div class="caption">
-    Inner Harbor of Baltimore (continued).
+    A partial view of the Bay from the above.
+</div>
+
+
+<div class="row">
+    <div class="col-sm mt-3 mt-md-0">
+        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/ita2023/3.JPG' | relative_url }}" alt="" title="book"/>
+    </div>
+</div>
+<div class="caption">
+    ITA with books.
+</div>
+
+
+
+
+<div class="row">
+    <div class="col-sm mt-3 mt-md-0">
+        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/ita2023/4.jpg' | relative_url }}" alt="" title="library"/>
+    </div>
+</div>
+<div class="caption">
+    The iconic UCSD library.
 </div>
 
 
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
-        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/ICML2022/the_street.jpg' | relative_url }}" alt="" title="the street view"/>
+        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/ita2023/5.jpg' | relative_url }}" alt="" title="beach"/>
     </div>
 </div>
 <div class="caption">
-    Baltimore downtown street view.
+    A beautiful beach.
 </div>
 
-Hope you like it!
+Wanna be back next year!
 
 
 <!-- <div class="row justify-content-sm-center">
@@ -93,6 +93,3 @@ Here's the code for the last row of images above:
 
 
  -->
-
-
-
