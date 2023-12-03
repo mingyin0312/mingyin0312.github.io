@@ -20,7 +20,7 @@ The 2023 Information Theory and ApplicationsWorkshop (ITA) took place at downtow
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
-        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/ita2023/1.JPG' | relative_url }}" alt="" title="overlook"/>
+        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/ITA2023/1.JPG' | relative_url }}" alt="" title="overlook"/>
     </div>
 </div>
 <div class="caption">
