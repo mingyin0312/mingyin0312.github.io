@@ -31,14 +31,6 @@ The 2023 Information Theory and ApplicationsWorkshop (ITA) took place at downtow
 
 
 
-<div class="row">
-    <div class="col-sm mt-3 mt-md-0">
-        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/ITA2023/1.JPG' | relative_url }}" alt="" title="overlook"/>
-    </div>
-</div>
-<div class="caption">
-    The Skyscrapers near the Bay. 
-</div>
 
 
 
@@ -53,15 +45,18 @@ The 2023 Information Theory and ApplicationsWorkshop (ITA) took place at downtow
 
 
 
-
-<div class="row">
+ <div class="row">
     <div class="col-sm mt-3 mt-md-0">
-        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/ITA2023/4.jpg' | relative_url }}" alt="" title="library"/>
+        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/ITA2023/1.JPG' | relative_url }}" alt="" title="Guitar"/>
+    </div>
+    <div class="col-sm mt-3 mt-md-0">
+        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/ITA2023/4.JPG' | relative_url }}" alt="" title="Hotels"/>
     </div>
 </div>
 <div class="caption">
-    The iconic UCSD library.
+    On the left, the Skyscrapers near the Bay. Right, the iconic UCSD library.
 </div>
+
 
 Wanna be back next year!
 
