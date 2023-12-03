@@ -2,7 +2,7 @@
 layout: page
 title: NeurIPS at New Orleans
 description: Downtown New Orleans in December! 
-img: /assets/img/neurips2022/1.jpg
+img: /assets/img/ICML2022/the_street.jpg
 importance: 1
 ---
 
@@ -17,29 +17,20 @@ The 2022 Conference on Neural Information Processing Systems (NeurIPS) took plac
     ------------------------------------------------------------------
  -->
 
-
-
-
-
-
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
-        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/neurips2022/1.JPG' | relative_url }}" alt="" title="mug"/>
+        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/neurips2022/1.JPG' | relative_url }}" alt="" title="Guitar"/>
+    </div>
+    <div class="col-sm mt-3 mt-md-0">
+        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/neurips2022/4.JPG' | relative_url }}" alt="" title="Hotels"/>
     </div>
 </div>
 <div class="caption">
-    Couldn't miss the iconic NeurIPS mug!
+    On the left, couldn't miss the iconic NeurIPS mug! Right, a view of Mississippi river from Jackson Square. 
 </div>
 
 
-<div class="row">
-    <div class="col-sm mt-3 mt-md-0">
-        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/neurips2022/2.JPG' | relative_url }}" alt="" title="French Quarter"/>
-    </div>
-</div>
-<div class="caption">
-    French Quarter street view in the night.
-</div>
+
 
 
 <div class="row">
@@ -54,26 +45,19 @@ The 2022 Conference on Neural Information Processing Systems (NeurIPS) took plac
 
 
 
-<div class="row">
-    <div class="col-sm mt-3 mt-md-0">
-        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/neurips2022/4.jpg' | relative_url }}" alt="" title="Mississippi river"/>
-    </div>
-</div>
-<div class="caption">
-    A view of Mississippi river from Jackson Square.
-</div>
-
-
 
 
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
-        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/neurips2022/5.jpg' | relative_url }}" alt="" title="Jazz music"/>
+        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/neurips2022/2.JPG' | relative_url }}" alt="" title="Guitar"/>
+    </div>
+    <div class="col-sm mt-3 mt-md-0">
+        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/neurips2022/5.JPG' | relative_url }}" alt="" title="Hotels"/>
     </div>
 </div>
 <div class="caption">
-    Live Jazz music! The best ever!!!
+    On the left, French Quarter street view in the night. Right, Live Jazz music! The best ever!!!
 </div>
 
 What a good memory!
