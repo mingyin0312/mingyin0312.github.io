@@ -2,7 +2,7 @@
 layout: page
 title: ITA at San Diego
 description: Downtown San Diego at the Bay! 
-img: /assets/img/ICML2022/the_street.jpg
+img: /assets/img/ITA2023/ITA.png
 importance: 1
 ---
 
