@@ -16,6 +16,19 @@ The 2023 Information Theory and ApplicationsWorkshop (ITA) took place at downtow
     authors: Kamil Ciosek, Quan Vuong, Robert Loftin and Katja Hofmann
     ------------------------------------------------------------------
  -->
+ <div class="row">
+    <div class="col-sm mt-3 mt-md-0">
+        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/ITA2023/3.JPG' | relative_url }}" alt="" title="Guitar"/>
+    </div>
+    <div class="col-sm mt-3 mt-md-0">
+        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/ITA2023/5.JPG' | relative_url }}" alt="" title="Hotels"/>
+    </div>
+</div>
+<div class="caption">
+    On the left, ITA with books. Right, a beautiful beach.
+</div>
+
+
 
 
 <div class="row">
@@ -39,16 +52,6 @@ The 2023 Information Theory and ApplicationsWorkshop (ITA) took place at downtow
 </div>
 
 
-<div class="row">
-    <div class="col-sm mt-3 mt-md-0">
-        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/ITA2023/3.JPG' | relative_url }}" alt="" title="book"/>
-    </div>
-</div>
-<div class="caption">
-    ITA with books.
-</div>
-
-
 
 
 <div class="row">
@@ -58,17 +61,6 @@ The 2023 Information Theory and ApplicationsWorkshop (ITA) took place at downtow
 </div>
 <div class="caption">
     The iconic UCSD library.
-</div>
-
-
-
-<div class="row">
-    <div class="col-sm mt-3 mt-md-0">
-        <img class="img-fluid rounded z-depth-1" src="{{ '/assets/img/ITA2023/5.jpg' | relative_url }}" alt="" title="beach"/>
-    </div>
-</div>
-<div class="caption">
-    A beautiful beach.
 </div>
 
 Wanna be back next year!
