@@ -96,6 +96,22 @@ nav: true
 
 <br>
 
+
+
+
+## Media Coverage 
+<br>
+
+#### MMMU 
+
+Our MMMU dataset is reported by <a href="https://www.jiqizhixin.com/articles/2023-12-01-2">机器之心|Synced</a>.
+
+
+
+***
+
+<br>
+
 ## Mentoring
 
 <br>
