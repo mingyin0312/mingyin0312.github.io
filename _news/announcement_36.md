@@ -6,4 +6,4 @@ inline: true
 
 
 
-Multimodal Understanding and Reasoning Benchmark [MMMU](https://mmmu-benchmark.github.io){:target="\_blank"} has been accepted to [CVPR-24](https://cvpr.thecvf.com){:target="\_blank"}!
+Multimodal Understanding Benchmark [MMMU](https://mmmu-benchmark.github.io){:target="\_blank"} has been accepted as [CVPR-24 Oral](https://cvpr.thecvf.com){:target="\_blank"} (top 3.3%)!
