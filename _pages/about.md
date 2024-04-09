@@ -17,7 +17,7 @@ selected_papers: true # includes a list of papers marked as "selected={true}"
 social: true  # includes social icons at the bottom of the page
 ---
 
-Postdoctoral Associate at [Princeton ECE](https://ece.princeton.edu){:target="\_blank"}
+Postdoctoral Associate at [Princeton ECE](https://ece.princeton.edu){:target="\_blank"} (Hosted by Dr. [Mengdi Wang](https://mwang.princeton.edu){:target="\_blank"})
 
 Ph.D., UC Santa Barbara, [Department of Computer Science](https://www.cs.ucsb.edu/){:target="\_blank"}
 
