@@ -5,7 +5,7 @@ permalink: /
 subtitle: Welcome to my homepage!
 profile:
   align: right
-  image: prof_pic_new.JPG
+  image: prof_real.jpeg
   image_circular: true # crops the image to make it circular
   address: >
     <p></p>
