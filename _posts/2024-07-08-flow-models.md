@@ -2,7 +2,7 @@
 layout: distill
 title: Flow models for Generative AI 
 description: As an alternative to Diffusion Models, Continuous Normalizing Flow Matching is one of the most powerful paradigm for generative AI modeling.  
-date: 2024-08-20 
+date: 2024-09-01 
 
 authors:
   - name: Ming Yin, Mengdi Wang
