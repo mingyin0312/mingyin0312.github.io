@@ -1,10 +1,10 @@
 ---
 layout: post
-date: 2024-09-25
+date: 2024-09-26
 inline: true
 ---
 
-Four papers accetped to NeurIPS-24 :sparkles:  :sparkles:
+Four papers + One Dataset paper accetped to NeurIPS-24 :sparkles:  :sparkles:
 
 
 
