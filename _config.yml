@@ -6,7 +6,7 @@ title: blank # the website title (if blank, full name will be used instead)
 first_name: Ming    
 middle_name: 
 last_name: Yin
-email: ming_yin@ucsb.edu
+email: my0049@princeton.edu
 description: > # the ">" symbol means to ignore newlines until "footer_text:"
   Personal page for Ming Yin
 footer_text: >
@@ -64,7 +64,7 @@ og_image: # The site-wide (default for all links) Open Graph preview image
 # Social integration
 # -----------------------------------------------------------------------------
 
-github_username: mingyin0312 # your GitHub user name
+github_username: #mingyin0312 # your GitHub user name
 gitlab_username: # your GitLab user name
 twitter_username: MingYin_0312 # your Twitter handle
 mastodon_username: # your mastodon instance+username in the format instance.tld/@username
