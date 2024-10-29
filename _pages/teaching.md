@@ -15,6 +15,42 @@ nav: true
 
 <br>
 
+
+
+
+**AAAI-25 Tutorial on Offline RL**
+
+<ul>
+    <li>
+        <sup>(2025/02)</sup> I will give a tutorial at <a href="https://aaai.org/conference/aaai/aaai-25/">AAAI-25</a> on "Advancing Offline Reinforcement Learning: Essential Theories and Techniques for Algorithm Developers".
+   </li>
+</ul>
+
+
+
+
+**The 2024 Young Researchers Workshop at Cornell ORIE**
+
+<ul>
+    <li>
+        <sup>(2024/10)</sup> Invited talk at Young Researchers Workshop on Sequential decision-making and Large Language Model Alignment. Thanks for the kind invitation!
+   </li>
+</ul>
+
+
+
+**The 25th International Symposium on Math Programming**
+
+<ul>
+    <li>
+        <sup>(2024/07)</sup> Invited talk at International Symposium on Math Programming about Deep RL target network learning in the function space!
+   </li>
+</ul>
+
+
+
+
+
 **2023 Informs Annual Meeting**
 
 <ul>
@@ -99,12 +135,14 @@ nav: true
 
 
 
-## Media Coverage 
+## Coverage 
 <br>
 
 #### MMMU 
 
-Our MMMU dataset is reported by <a href="https://www.jiqizhixin.com/articles/2023-12-01-2">机器之心|Synced</a>.
+Our MMMU dataset is covered by <a href="https://aiindex.stanford.edu/wp-content/uploads/2024/04/HAI_2024_AI-Index-Report.pdf">Artificial Intelligence Index Report 2024</a>, and reported in posts e.g. <a href="https://blog.google/technology/ai/google-gemini-ai/#performance">Gemini</a>, <a href="https://ai.meta.com/blog/llama-3-2-connect-2024-vision-edge-mobile-devices/">Llama-3.2</a>, and <a href="https://openai.com/index/hello-gpt-4o/">GPT-4o</a>. 
+
+
 
 
 
