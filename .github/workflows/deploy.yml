@@ -32,6 +32,12 @@ jobs:
         run: |
           npm install -g mermaid.cli
 
+      - name: Debug variables
+        run: |
+          echo "NO_PUSH=${{ steps.setup.outputs.NO_PUSH }}"
+          echo "SRC_BRANCH=${{ steps.setup.outputs.SRC_BRANCH }}"
+          echo "DEPLOY_BRANCH=${{ steps.setup.outputs.DEPLOY_BRANCH }}"
+
       - name: Setup deploy options
         id: setup
         run: |
@@ -47,7 +53,7 @@ jobs:
 
       - name: Deploy website
         run: |
-          yes | bash bin/deploy --verbose \
+          bash bin/deploy --verbose \
               "${{ steps.setup.outputs.NO_PUSH }}" \
               --src "${{ steps.setup.outputs.SRC_BRANCH }}" \
               --deploy "${{ steps.setup.outputs.DEPLOY_BRANCH }}"
