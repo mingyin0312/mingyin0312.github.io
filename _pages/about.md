@@ -44,7 +44,7 @@ I am fond of the broad area of machine learning, e.g. reinforcement learning, la
 I also share my thoughts and summarize the ideas of my research and some topics I am interested in the `Blog` page. For the list of my papers, go to [Publications](/publications) page.
 -->
 I have also spent time at Amazon AWS AI Research & Education during the summers.
-My research focuses on understanding the foundations of sequential decision-making and applying them to real-world challenges in AI and science. For an overview, visit my **[Research](/research)** page! I also share insights and summarize key ideas from my research, along with topics of personal interest, on the [Blog](/blog) page. For a full list of my publications, check out the [Publications](/publications) page. **I am currently on the academic job market 2024-2025.**
+My research focuses on understanding the foundations of sequential decision-making and applying them to real-world challenges in AI and science. For an overview, visit my **[Research](/research)** page! I also share insights and summarize key ideas from my research, along with topics of personal interest, on the [Blog](/blog) page. For a full list of my publications, check out the [Publications](/publications) page. **I am currently on the academic job market 2024-2025!** [<a href="/assets/pdf/CV.pdf" target="_blank">Most recent CV</a>]
 
  
 In my spare time, I enjoy doing sports (mostly basketball and soccer), traveling, and hiking with friends and family. Besides, I like listening to classical music and playing piano slightly. 
