@@ -15,6 +15,23 @@ nav: true
 
 <br>
 
+**NSF CPS PI Annual Meeting**
+
+<ul>
+    <li>
+        <sup>(2025/03)</sup> I gave a presentation at <a href="https://cps-vo.org/group/cps-pimtg25">CPS PI Meeting</a> on Robust Multi-Agent Reinforcement Learning.
+   </li>
+</ul>
+
+
+
+**8th Workshop on Cognition & Contorl**
+
+<ul>
+    <li>
+        <sup>(2025/03)</sup> I gave a talk at <a href="https://meyn.ece.ufl.edu/c3/c3-8/">8th Workshop on Cognition & Contorl</a> on the statistical complexity of offline reinforcement learning. Thank you Sean Meyn and Yuheng Bu for the kind invitation!
+   </li>
+</ul>
 
 
 
@@ -22,7 +39,7 @@ nav: true
 
 <ul>
     <li>
-        <sup>(2025/02)</sup> I will give a tutorial at <a href="https://aaai.org/conference/aaai/aaai-25/">AAAI-25</a> on "Advancing Offline Reinforcement Learning: Essential Theories and Techniques for Algorithm Developers".
+        <sup>(2025/02)</sup> I gave a tutorial at <a href="https://aaai.org/conference/aaai/aaai-25/">AAAI-25</a> on "Advancing Offline Reinforcement Learning: Essential Theories and Techniques for Algorithm Developers".
    </li>
 </ul>
 
