@@ -1,8 +1,10 @@
 ---
 layout: post
-date: 2025-02-21
+date: 2025-04-13
 inline: true
 ---
 
-I updated [an experiment](https://mingyin0312.github.io/blog/2025/rl-llm/) on RL for LLMs. A **related preprint** coming out soon!  
+[CRISPR-GPT](/assets/pdf/CRISPR-GPT.pdf) is accepted to [Nature Biomedical Engineering](https://www.nature.com/natbiomedeng/) :sparkles::sparkles: 
+
+
 
