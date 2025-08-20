@@ -1,0 +1,1387 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.4.1">Jekyll</generator><link href="https://mingyin0312.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://mingyin0312.github.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2025-08-20T05:21:32+00:00</updated><id>https://mingyin0312.github.io/feed.xml</id><title type="html">blank</title><subtitle>Personal page for Ming Yin
+</subtitle><entry><title type="html">GRPO From Scratch</title><link href="https://mingyin0312.github.io/blog/2025/grpo/" rel="alternate" type="text/html" title="GRPO From Scratch" /><published>2025-08-19T00:00:00+00:00</published><updated>2025-08-19T00:00:00+00:00</updated><id>https://mingyin0312.github.io/blog/2025/grpo</id><content type="html" xml:base="https://mingyin0312.github.io/blog/2025/grpo/"><![CDATA[<p><strong>Group Relative Policy Optimization</strong> <d-cite key="shao2024deepseekmath"></d-cite> is an RL algorithm that improves the model’s reasoning capability. It is a variant of <strong>Proximal Policy Optimization</strong> <d-cite key="schulman2017proximal"></d-cite> that is originally designed for robotic locomotion control and Atari game playing. GRPO turned out to be effective for rule-based reward, as demonstrated in DeepSeek-R1 <d-cite key="guo2025deepseek"></d-cite>.</p>
+
+<p>To uncover the implementation details in the minimal way, I implemented GRPO from scratch with PyTorch in 👉 <a href="https://github.com/mingyin0312/RLFromScratch/blob/main/grpo_train_from_scratch.py">RLFromScratch</a>. Let’s now understand it step by step.</p>
+
+<hr />
+
+<h3 id="quick-recap-of-grpo-algorithm">Quick Recap of GRPO Algorithm</h3>
+
+<p>The objective function of GRPO has the following</p>
+
+\[\mathcal{J}_{\mathrm{GRPO}}(\theta) 
+= \mathbb{E}_{q,\,\{o_i\}_{i=1}^G \sim \pi_{\theta_{\mathrm{old}}}(\cdot \mid q)}
+\Bigg[
+\frac{1}{G} \sum_{i=1}^G \frac{1}{|o_i|} \sum_{t=1}^{|o_i|}
+\Big\{
+\min \Big[
+\Gamma_{i,t}\,\hat{A}_{i,t},\;
+\mathrm{clip}\!\big(\Gamma_{i,t},\,1-\varepsilon,\,1+\varepsilon\big)\,\hat{A}_{i,t}
+\Big]
+- \beta\,\mathbb{D}_{\mathrm{KL}}\!\big[\pi_\theta \,\|\, \pi_{\mathrm{ref}}\big]
+\Big\}
+\Bigg] .\]
+
+<p>where \(\Gamma_{i,t}:=\frac{\pi_\theta\left(o_{i, t} \mid q, o_{i,&lt;t}\right)}{\pi_{\theta_{\text {old }}}\left(o_{i, t} \mid q, o_{i,&lt;t}\right)}\), \(\varepsilon, \beta\) are hyper-parameters, and \(\hat{A}_{i,t}\) is the advantage calculated based on relative rewards of the outputs inside each group only with \(\hat{A}_{i, t}=\widetilde{r}_i=\frac{r_i-\operatorname{mean}(\mathbf{r})}{\operatorname{std}(\mathbf{r})}\). The unbiased estimator of KL divergence is \(\mathbb{D}_{K L}\left[\pi_\theta \| \pi_{r e f}\right]=\frac{\pi_{r e f}\left(o_{i, t} \mid q, o_{i,&lt;t}\right)}{\pi_\theta\left(o_{i, t} \mid q, o_{i,&lt;t}\right)}-\log \frac{\pi_{r e f}\left(o_{i, t} \mid q, o_{i,&lt;t}\right)}{\pi_\theta\left(o_{i, t} \mid q, o_{i,&lt;t}\right)}-1\).</p>
+
+<hr />
+
+<h3 id="code-explanation">Code Explanation</h3>
+
+<p><strong>- Reward Design</strong></p>
+
+<p>I want to enforce the model to learn both the correct format and the correct answer. Format score is 1.0 and answer score is 2.0. The full reward is 3.0. The partial reward is 1.0.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">compute_format_score</span><span class="p">(</span><span class="n">batch_responses</span><span class="p">):</span>
+    <span class="sh">"""</span><span class="s">Reward function that checks if the completion has the correct format.</span><span class="sh">"""</span>
+    <span class="n">pattern</span> <span class="o">=</span> <span class="sa">r</span><span class="sh">"</span><span class="s">^&lt;reasoning&gt;(?:(?!&lt;/reasoning&gt;).)*&lt;/reasoning&gt;\n&lt;answer&gt;(?:(?!&lt;/answer&gt;).)*&lt;/answer&gt;$</span><span class="sh">"</span>
+    <span class="n">matches</span> <span class="o">=</span> <span class="p">[</span><span class="nf">bool</span><span class="p">(</span><span class="n">re</span><span class="p">.</span><span class="nf">match</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">g_a</span><span class="p">))</span> <span class="k">for</span> <span class="n">g_a</span> <span class="ow">in</span> <span class="n">batch_responses</span><span class="p">]</span>
+    <span class="n">format_scores</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span> <span class="k">if</span> <span class="n">match</span> <span class="k">else</span> <span class="mf">0.0</span> <span class="k">for</span> <span class="k">match</span> <span class="ow">in</span> <span class="n">matches</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">format_scores</span>
+
+<span class="k">def</span> <span class="nf">compute_reward</span><span class="p">(</span><span class="n">batch_answers</span><span class="p">,</span> <span class="n">answers</span><span class="p">):</span>
+    <span class="sh">"""</span><span class="s">Reward function that checks if the answer is correct.</span><span class="sh">"""</span>
+    <span class="n">reward_scores</span> <span class="o">=</span> <span class="p">[</span><span class="mf">2.0</span> <span class="k">if</span> <span class="n">g_a</span> <span class="o">==</span> <span class="n">a</span> <span class="k">else</span> <span class="mf">0.0</span> <span class="k">for</span> <span class="n">g_a</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="nf">zip</span><span class="p">(</span><span class="n">batch_answers</span><span class="p">,</span> <span class="n">answers</span><span class="p">)]</span>
+    <span class="k">return</span> <span class="n">reward_scores</span>
+</code></pre></div></div>
+
+<p><strong>- Initial Training Loop</strong></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">num_epochs</span><span class="p">):</span>
+    <span class="n">train_sampler</span><span class="p">.</span><span class="nf">set_epoch</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">step</span><span class="p">,</span> <span class="p">(</span><span class="n">prompts</span><span class="p">,</span> <span class="n">answers</span><span class="p">)</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="nf">tqdm</span><span class="p">(</span><span class="n">train_loader</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="sa">f</span><span class="sh">"</span><span class="s">Epoch </span><span class="si">{</span><span class="n">epoch</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="sh">"</span><span class="p">)):</span>
+        <span class="n">prompt_enc</span> <span class="o">=</span> <span class="nf">tokenizer</span><span class="p">(</span>
+            <span class="n">prompts</span><span class="p">,</span>
+            <span class="n">return_tensors</span> <span class="o">=</span> <span class="sh">'</span><span class="s">pt</span><span class="sh">'</span><span class="p">,</span>
+            <span class="n">padding</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span>
+            <span class="n">padding_side</span> <span class="o">=</span> <span class="sh">'</span><span class="s">left</span><span class="sh">'</span><span class="p">,</span>
+            <span class="n">truncation</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="p">)</span>
+        <span class="n">input_ids</span> <span class="o">=</span> <span class="n">prompt_enc</span><span class="p">[</span><span class="sh">"</span><span class="s">input_ids</span><span class="sh">"</span><span class="p">].</span><span class="nf">to</span><span class="p">(</span><span class="n">local_rank</span><span class="p">)</span> <span class="c1"># (B, prompt_len) and left_pad
+</span>        <span class="n">attention_mask</span> <span class="o">=</span> <span class="n">prompt_enc</span><span class="p">[</span><span class="sh">"</span><span class="s">attention_mask</span><span class="sh">"</span><span class="p">].</span><span class="nf">to</span><span class="p">(</span><span class="n">local_rank</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>The <code class="language-plaintext highlighter-rouge">input_ids</code> and <code class="language-plaintext highlighter-rouge">attention_mask</code> are used as inputs to generate responses (online exploration in RL).</p>
+
+<p><strong>- Generate K Samples Per Prompt</strong></p>
+
+<p>The number of Group is K.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">policy_model</span><span class="p">.</span><span class="nf">eval</span><span class="p">()</span>
+<span class="k">with</span> <span class="n">torch</span><span class="p">.</span><span class="nf">no_grad</span><span class="p">():</span>
+    <span class="k">with</span> <span class="n">torch</span><span class="p">.</span><span class="nf">autocast</span><span class="p">(</span><span class="n">device_type</span><span class="o">=</span><span class="sh">"</span><span class="s">cuda</span><span class="sh">"</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="p">.</span><span class="n">bfloat16</span><span class="p">):</span>
+        <span class="n">explore_generations</span> <span class="o">=</span> <span class="n">policy_model</span><span class="p">.</span><span class="n">module</span><span class="p">.</span><span class="nf">generate</span><span class="p">(</span>
+                <span class="n">input_ids</span><span class="o">=</span><span class="n">input_ids</span><span class="p">,</span>
+                <span class="n">attention_mask</span><span class="o">=</span><span class="n">attention_mask</span><span class="p">,</span>
+                <span class="n">max_new_tokens</span><span class="o">=</span><span class="n">max_new_tokens</span><span class="p">,</span>
+                <span class="n">do_sample</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                <span class="n">num_return_sequences</span><span class="o">=</span><span class="n">K</span><span class="p">,</span>
+                <span class="n">top_p</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
+                <span class="n">temperature</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+                <span class="n">eos_token_id</span><span class="o">=</span><span class="n">tokenizer</span><span class="p">.</span><span class="n">eos_token_id</span>
+            <span class="p">)</span> <span class="c1"># (batch_size * K, prompt_len + max_new_tokens)
+</span><span class="n">policy_model</span><span class="p">.</span><span class="nf">train</span><span class="p">()</span>
+<span class="n">prompt_len</span> <span class="o">=</span> <span class="n">input_ids</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">batch_size</span> <span class="o">=</span> <span class="n">input_ids</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">batch_attention_mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">explore_generations</span> <span class="o">!=</span> <span class="n">tokenizer</span><span class="p">.</span><span class="n">pad_token_id</span><span class="p">).</span><span class="nf">long</span><span class="p">()</span> 
+</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">explore_generations</code> and <code class="language-plaintext highlighter-rouge">batch_attention_mask</code> will be used to compute logits.</p>
+
+<p><strong>- Compute logprobs</strong></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">policy_model</span><span class="p">.</span><span class="nf">eval</span><span class="p">()</span>
+<span class="k">with</span> <span class="n">torch</span><span class="p">.</span><span class="nf">no_grad</span><span class="p">():</span>
+    <span class="k">with</span> <span class="n">torch</span><span class="p">.</span><span class="nf">autocast</span><span class="p">(</span><span class="n">device_type</span><span class="o">=</span><span class="sh">"</span><span class="s">cuda</span><span class="sh">"</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="p">.</span><span class="n">bfloat16</span><span class="p">):</span>
+        <span class="n">out_old</span> <span class="o">=</span> <span class="nf">policy_model</span><span class="p">(</span><span class="n">explore_generations</span><span class="p">,</span>  <span class="n">batch_attention_mask</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">logits_old</span> <span class="o">=</span> <span class="n">out_old</span><span class="p">.</span><span class="n">logits</span> <span class="c1"># [batch_size * K, seq_len, vocab_size]
+</span><span class="n">policy_model</span><span class="p">.</span><span class="nf">train</span><span class="p">()</span>
+<span class="c1"># shift logits and labels
+</span><span class="n">logits_old</span> <span class="o">=</span> <span class="n">logits_old</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:].</span><span class="nf">contiguous</span><span class="p">()</span> <span class="c1"># [batch_size * K, seq_len - 1, vocab_size]
+</span><span class="n">labels_old</span> <span class="o">=</span> <span class="n">labels</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:].</span><span class="nf">contiguous</span><span class="p">()</span> <span class="c1"># [batch_size * K, seq_len - 1]
+</span><span class="n">logprobs_old</span> <span class="o">=</span> <span class="o">-</span><span class="n">F</span><span class="p">.</span><span class="nf">cross_entropy</span><span class="p">(</span>
+    <span class="n">logits_old</span><span class="p">.</span><span class="nf">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">logits_old</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span> <span class="n">labels_old</span><span class="p">.</span><span class="nf">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">reduction</span> <span class="o">=</span> <span class="sh">'</span><span class="s">none</span><span class="sh">'</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=-</span><span class="mi">100</span>
+<span class="p">).</span><span class="nf">view</span><span class="p">(</span><span class="n">logits_old</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="c1"># [batch_size * K, seq_len - 1]
+</span><span class="k">assert</span> <span class="n">batch_action_mask</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">logprobs_old</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">batch_action_mask</span><span class="p">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">batch_attention_mask</span><span class="p">.</span><span class="n">shape</span>
+<span class="n">logprobs_old</span> <span class="o">=</span> <span class="n">logprobs_old</span><span class="p">.</span><span class="nf">view</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="c1"># [batch_size, K, seq_len - 1]
+</span></code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">logprobs_old</code> denotes elementwise \(\log \pi_{\theta_{old}}(o_t\mid o_{&lt;t}, q)\). Similarly, <code class="language-plaintext highlighter-rouge">logprobs_ref</code> computes \(\log \pi_{\theta_{ref}}(o_t\mid o_{&lt;t}, q)\), and <code class="language-plaintext highlighter-rouge">logprobs_new</code> denotes \(\log \pi_{\theta}(o_t\mid o_{&lt;t}, q)\).</p>
+
+<p><strong>- Compute advantages</strong></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">batch_responses_ids</span> <span class="o">=</span> <span class="n">explore_generations</span><span class="p">[:,</span> <span class="n">prompt_len</span><span class="p">:]</span> <span class="c1"># (batch_size*K, response_length) right pad
+</span><span class="n">batch_responses</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="p">.</span><span class="nf">batch_decode</span><span class="p">(</span><span class="n">batch_responses_ids</span><span class="p">,</span> <span class="n">skip_special_tokens</span> <span class="o">=</span> <span class="bp">True</span><span class="p">)</span> <span class="c1"># (batch_size*K, response_text_length)
+</span><span class="n">batch_answers</span> <span class="o">=</span> <span class="p">[</span><span class="nf">extract_xml_answer</span><span class="p">(</span><span class="n">batch_responses</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">batch_responses</span><span class="p">))]</span> <span class="c1"># (batch_size*K, generated_answer_length) str
+</span><span class="n">answers_K</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">answers</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">K</span><span class="p">)]</span>
+<span class="k">assert</span> <span class="nf">len</span><span class="p">(</span><span class="n">batch_answers</span><span class="p">)</span> <span class="o">==</span> <span class="nf">len</span><span class="p">(</span><span class="n">answers_K</span><span class="p">)</span>
+<span class="n">batch_format_scores</span> <span class="o">=</span> <span class="nf">compute_format_score</span><span class="p">(</span><span class="n">batch_responses</span><span class="p">)</span> <span class="c1"># (batch_size*K, 1)
+</span><span class="n">batch_reward_scores</span> <span class="o">=</span> <span class="nf">compute_reward</span><span class="p">(</span><span class="n">batch_answers</span><span class="p">,</span> <span class="n">answers_K</span><span class="p">)</span> <span class="c1"># (batch_size*K, 1)
+</span><span class="n">batch_rewards</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">tensor</span><span class="p">([</span><span class="n">bfs</span> <span class="o">+</span> <span class="n">brs</span> <span class="k">for</span> <span class="n">bfs</span><span class="p">,</span> <span class="n">brs</span> <span class="ow">in</span> <span class="nf">zip</span><span class="p">(</span><span class="n">batch_format_scores</span><span class="p">,</span> <span class="n">batch_reward_scores</span><span class="p">)],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="p">.</span><span class="n">float16</span><span class="p">)</span>
+<span class="n">batch_rewards</span> <span class="o">=</span> <span class="n">batch_rewards</span><span class="p">.</span><span class="nf">view</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">K</span><span class="p">)</span> <span class="c1"># (batch_size, K)
+</span><span class="n">batch_advantages</span> <span class="o">=</span> <span class="p">(</span><span class="n">batch_rewards</span> <span class="o">-</span> <span class="n">batch_rewards</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">dim</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span> <span class="o">=</span> <span class="bp">True</span><span class="p">))</span> <span class="o">/</span> <span class="n">batch_rewards</span><span class="p">.</span><span class="nf">std</span><span class="p">(</span><span class="n">dim</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span> <span class="o">=</span> <span class="bp">True</span><span class="p">).</span><span class="nf">clamp_min</span><span class="p">(</span><span class="mf">1e-6</span><span class="p">)</span>
+<span class="n">batch_advantages</span> <span class="o">=</span> <span class="n">batch_advantages</span><span class="p">.</span><span class="nf">to</span><span class="p">(</span><span class="n">local_rank</span><span class="p">)</span> <span class="c1"># (batch_size, K)
+</span><span class="k">assert</span> <span class="n">batch_advantages</span><span class="p">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">K</span><span class="p">)</span>
+<span class="n">batch_advantages</span> <span class="o">=</span> <span class="n">batch_advantages</span><span class="p">.</span><span class="nf">unsqueeze</span><span class="p">(</span><span class="mi">2</span><span class="p">).</span><span class="nf">expand_as</span><span class="p">(</span><span class="n">logprobs_ref</span><span class="p">)</span> <span class="c1"># [batch_size, K, seq_len - 1]
+</span><span class="k">assert</span> <span class="n">batch_advantages</span><span class="p">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">logprobs_ref</span><span class="p">.</span><span class="n">shape</span>
+</code></pre></div></div>
+
+<p>The resulting <code class="language-plaintext highlighter-rouge">batch_advantages</code> has shape <code class="language-plaintext highlighter-rouge">[batch_size, K, seq_len - 1]</code>. The last dimension is simply a replication since \(\hat{A}_{i, t}=\widetilde{r}_i=\frac{r_i-\operatorname{mean}(\mathbf{r})}{\operatorname{std}(\mathbf{r})}\) is independent of sequence length t.</p>
+
+<p><strong>- Valid mask</strong></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">valid_mask</span> <span class="o">=</span> <span class="n">batch_action_mask</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">].</span><span class="nf">contiguous</span><span class="p">().</span><span class="nf">float</span><span class="p">().</span><span class="nf">view</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="c1"># [batch_size, K, seq_len - 1] 
+</span></code></pre></div></div>
+
+<p>This is critical for the summation \(\frac{1}{\mid o_i\mid}\sum_{t=1}^{\mid o_i \mid}\) since every responses have vary lengths. Using <code class="language-plaintext highlighter-rouge">.mean()</code> will also take the invalid tokens into account due to padding, which is not what we want.</p>
+
+<p><strong>- Compute probability ratios</strong></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">ratio</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">exp</span><span class="p">(</span><span class="n">logprobs_new</span> <span class="o">-</span> <span class="n">logprobs_old</span><span class="p">)</span> <span class="c1"># [batch_size, K, seq_len - 1]
+</span><span class="n">ratio_clipped</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">clamp</span><span class="p">(</span><span class="n">ratio</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">ppo_clip_range</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">+</span> <span class="n">ppo_clip_range</span><span class="p">)</span> <span class="c1"># [batch_size, K, seq_len - 1]
+</span><span class="n">individual_ppo_reward</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">min</span><span class="p">(</span><span class="n">ratio</span> <span class="o">*</span> <span class="n">batch_advantages</span><span class="p">,</span> <span class="n">ratio_clipped</span> <span class="o">*</span> <span class="n">batch_advantages</span><span class="p">)</span> <span class="c1"># [batch_size, K, seq_len - 1]
+</span></code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">ratio</code> computes pointwise \(\Gamma_{i,t}:=\frac{\pi_\theta\left(o_{i, t} \mid q, o_{i,&lt;t}\right)}{\pi_{\theta_{\text {old }}}\left(o_{i, t} \mid q, o_{i,&lt;t}\right)}\), <code class="language-plaintext highlighter-rouge">ratio_clipped</code> computes pointwise \(\mathrm{clip}\!\big(\Gamma_{i,t},\,1-\varepsilon,\,1+\varepsilon\big)\), and <code class="language-plaintext highlighter-rouge">individual_ppo_reward</code> denotes \(\min[
+\Gamma_{i,t}\,\hat{A}_{i,t},\;
+\mathrm{clip}\!\big(\Gamma_{i,t},\,1-\varepsilon,\,1+\varepsilon\big)\,\hat{A}_{i,t}]\).</p>
+
+<p><strong>- Compute KL penalty</strong></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">ratio_ref_log</span> <span class="o">=</span> <span class="n">logprobs_ref</span> <span class="o">-</span> <span class="n">logprobs_new</span> <span class="c1"># [batch_size, K, seq_len - 1]
+</span><span class="n">ratio_ref</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">exp</span><span class="p">(</span><span class="n">ratio_ref_log</span><span class="p">)</span> <span class="c1"># [batch_size, K, seq_len - 1]
+</span><span class="n">individual_kl_penality</span> <span class="o">=</span> <span class="n">ratio_ref</span> <span class="o">-</span> <span class="n">ratio_ref_log</span> <span class="o">-</span> <span class="mi">1</span> <span class="c1"># [batch_size, K, seq_len - 1]
+</span></code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">individual_kl_penality</code> denotes \(\frac{\pi_{r e f}\left(o_{i, t} \mid q, o_{i,&lt;t}\right)}{\pi_\theta\left(o_{i, t} \mid q, o_{i,&lt;t}\right)}-\log \frac{\pi_{r e f}\left(o_{i, t} \mid q, o_{i,&lt;t}\right)}{\pi_\theta\left(o_{i, t} \mid q, o_{i,&lt;t}\right)}-1\).</p>
+
+<p><strong>- Compute the overall GRPO loss</strong></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">sum_loss_ave_response</span> <span class="o">=</span> <span class="p">(</span><span class="n">individual_ppo_reward</span> <span class="o">-</span> <span class="n">kl_coef</span> <span class="o">*</span> <span class="n">individual_kl_penality</span><span class="p">).</span><span class="nf">sum</span><span class="p">(</span><span class="n">dim</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="c1"># [batch_size, K]
+</span><span class="n">count_ave_response</span> <span class="o">=</span> <span class="n">valid_mask</span><span class="p">.</span><span class="nf">sum</span><span class="p">(</span><span class="n">dim</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="c1"># [batch_size, K]
+</span><span class="n">reward_ave_response</span> <span class="o">=</span> <span class="n">sum_loss_ave_response</span> <span class="o">/</span> <span class="n">count_ave_response</span> <span class="c1"># [batch_size, K]
+</span><span class="n">grpo_loss</span> <span class="o">=</span> <span class="o">-</span><span class="n">reward_ave_response</span><span class="p">.</span><span class="nf">mean</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">sum_loss_ave_response</code> preformed operation $\sum_{t=1}^{\mid o_i \mid}$, and <code class="language-plaintext highlighter-rouge">reward_ave_response</code> preformed operation \(\frac{1}{\mid o_i \mid}\).</p>
+
+<p>This concludes the key steps of GRPO.</p>
+
+<!-- 
+
+****
+
+****
+ -->
+
+<h2 id="miscellaneous">Miscellaneous</h2>
+
+<p>Also see this on twitter:</p>
+<div class="jekyll-twitter-plugin"><blockquote class="twitter-tweet" data-width="500"><p lang="en" dir="ltr">I implemented GRPO and DPO from scratch in vanilla Pytorch to unravel every piece of training details. Hope it could be helpful for those who care about the implementation details of the algorithms. 👉 <a href="https://t.co/1Exq7GTkLY">https://t.co/1Exq7GTkLY</a> <a href="https://twitter.com/hashtag/AI?src=hash&amp;ref_src=twsrc%5Etfw">#AI</a> <a href="https://twitter.com/hashtag/RL?src=hash&amp;ref_src=twsrc%5Etfw">#RL</a> <a href="https://twitter.com/hashtag/LLM?src=hash&amp;ref_src=twsrc%5Etfw">#LLM</a></p>&mdash; Ming Yin (@MingYin_0312) <a href="https://twitter.com/MingYin_0312/status/1955351703626154017?ref_src=twsrc%5Etfw">August 12, 2025</a></blockquote>
+<script async="" src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+</div>]]></content><author><name>Ming Yin</name></author><summary type="html"><![CDATA[This post explains my pytorch implementation of Group Relative Policy Optimization Algorithm.]]></summary></entry><entry><title type="html">DPO From Scratch</title><link href="https://mingyin0312.github.io/blog/2025/dpo/" rel="alternate" type="text/html" title="DPO From Scratch" /><published>2025-08-18T00:00:00+00:00</published><updated>2025-08-18T00:00:00+00:00</updated><id>https://mingyin0312.github.io/blog/2025/dpo</id><content type="html" xml:base="https://mingyin0312.github.io/blog/2025/dpo/"><![CDATA[<p><strong>Direct Preference Optimization</strong> <d-cite key="rafailov2023direct"></d-cite> is an LLM alignment method that directly trains a language model to prefer human-preferred outputs over rejected ones by minimizing a contrastive loss between the two. Unlike the standard RLHF, it does not require an explicit reward model to fit/train.</p>
+
+<p>To uncover the implementation details in the minimal way, I implemented DPO from scratch with PyTorch in 👉 <a href="https://github.com/mingyin0312/RLFromScratch/blob/main/dpo_train_from_scratch.py">RLFromScratch</a>. Let’s now understand it step by step.</p>
+
+<hr />
+
+<h3 id="quick-recap-of-dpo-algorithm">Quick Recap of DPO Algorithm</h3>
+
+<p>Given a reward function, the RL Fine-tuning phase optimizes LLM via</p>
+
+\[\max _{\pi_\theta} \mathbb{E}_{x \sim \mathcal{D}, y \sim \pi_\theta(y \mid x)}\left[r_\phi(x, y)\right]-\beta \mathbb{D}_{\mathrm{KL}}\left[\pi_\theta(y \mid x) \| \pi_{\mathrm{ref}}(y \mid x)\right].\]
+
+<p>Given the partition function $Z(x)=\sum_y \pi_{\mathrm{ref}}(y \mid x) \exp \left(\frac{1}{\beta} r(x, y)\right)$, the closed-form solution takes</p>
+
+\[\pi_r(y \mid x)=\frac{1}{Z(x)} \pi_{\mathrm{ref}}(y \mid x) \exp \left(\frac{1}{\beta} r(x, y)\right)\]
+
+<p>This further gives</p>
+
+\[r(x, y)=\beta \log \frac{\pi_r(y \mid x)}{\pi_{\mathrm{ref}}(y \mid x)}+\beta \log Z(x) .\]
+
+<p>Under the Bradley-Terry model, the preference model follows:</p>
+
+\[p^*\left(y_1 \succ y_2 \mid x\right)=\frac{1}{1+\exp \left(\beta \log \frac{\pi^*\left(y_2 \mid x\right)}{\pi_{\mathrm{ref}}\left(y_2 \mid x\right)}-\beta \log \frac{\pi^*\left(y_1 \mid x\right)}{\pi_{\mathrm{ref}}\left(y_1 \mid x\right)}\right)}\]
+
+<p>So the negative likelihood naturally provides the following DPO loss:</p>
+
+\[\mathcal{L}_{\mathrm{DPO}}(\pi_\theta,\pi_{\mathrm{ref}})=-\mathbb{E}_{\left(x, y_w, y_l\right) \sim \mathcal{D}}\left[\log \sigma\left(\beta \log \frac{\pi_\theta\left(y_w \mid x\right)}{\pi_{\mathrm{ref}}\left(y_w \mid x\right)}-\beta \log \frac{\pi_\theta\left(y_l \mid x\right)}{\pi_{\mathrm{ref}}\left(y_l \mid x\right)}\right)\right].\]
+
+<p>Our code implmented above loss for training.</p>
+
+<hr />
+
+<h3 id="code-explanation">Code Explanation</h3>
+
+<p><strong>- Format Input</strong></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">collate_fn</span><span class="p">(</span><span class="n">batch</span><span class="p">):</span>
+    <span class="n">input_ids</span><span class="p">,</span> <span class="n">labels_list</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">prompt</span><span class="p">,</span> <span class="n">chosen_resp</span><span class="p">,</span> <span class="n">rejected_resp</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">:</span>
+        <span class="c1"># Token IDs for prompt &amp; responses
+</span>        <span class="n">p_ids</span> <span class="o">=</span> <span class="nf">tokenizer</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">add_special_tokens</span><span class="o">=</span><span class="bp">False</span><span class="p">)[</span><span class="sh">"</span><span class="s">input_ids</span><span class="sh">"</span><span class="p">]</span>
+        <span class="n">c_ids</span> <span class="o">=</span> <span class="nf">tokenizer</span><span class="p">(</span><span class="n">chosen_resp</span><span class="p">,</span> <span class="n">add_special_tokens</span><span class="o">=</span><span class="bp">False</span><span class="p">)[</span><span class="sh">"</span><span class="s">input_ids</span><span class="sh">"</span><span class="p">]</span>
+        <span class="n">r_ids</span> <span class="o">=</span> <span class="nf">tokenizer</span><span class="p">(</span><span class="n">rejected_resp</span><span class="p">,</span> <span class="n">add_special_tokens</span><span class="o">=</span><span class="bp">False</span><span class="p">)[</span><span class="sh">"</span><span class="s">input_ids</span><span class="sh">"</span><span class="p">]</span>
+        <span class="c1"># Build input IDs
+</span>        <span class="n">input_ids</span> <span class="o">+=</span> <span class="p">[</span>
+            <span class="n">torch</span><span class="p">.</span><span class="nf">tensor</span><span class="p">(</span><span class="n">p_ids</span> <span class="o">+</span> <span class="n">c_ids</span><span class="p">,</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nb">long</span><span class="p">),</span>
+            <span class="n">torch</span><span class="p">.</span><span class="nf">tensor</span><span class="p">(</span><span class="n">p_ids</span> <span class="o">+</span> <span class="n">r_ids</span><span class="p">,</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nb">long</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="c1"># Build labels: mask prompt with -100, keep response tokens
+</span>        <span class="n">labels_list</span> <span class="o">+=</span> <span class="p">[</span>
+            <span class="n">torch</span><span class="p">.</span><span class="nf">tensor</span><span class="p">([</span><span class="o">-</span><span class="mi">100</span><span class="p">]</span><span class="o">*</span><span class="nf">len</span><span class="p">(</span><span class="n">p_ids</span><span class="p">)</span> <span class="o">+</span> <span class="n">c_ids</span><span class="p">,</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nb">long</span><span class="p">),</span>
+            <span class="n">torch</span><span class="p">.</span><span class="nf">tensor</span><span class="p">([</span><span class="o">-</span><span class="mi">100</span><span class="p">]</span><span class="o">*</span><span class="nf">len</span><span class="p">(</span><span class="n">p_ids</span><span class="p">)</span> <span class="o">+</span> <span class="n">r_ids</span><span class="p">,</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nb">long</span><span class="p">)</span>
+        <span class="p">]</span>
+
+    <span class="n">input_ids</span> <span class="o">=</span> <span class="nf">pad_sequence</span><span class="p">(</span><span class="n">input_ids</span><span class="p">,</span> <span class="n">batch_first</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">padding_value</span><span class="o">=</span><span class="n">tokenizer</span><span class="p">.</span><span class="n">pad_token_id</span><span class="p">)</span>
+    <span class="n">attention_mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">input_ids</span> <span class="o">!=</span> <span class="n">tokenizer</span><span class="p">.</span><span class="n">pad_token_id</span><span class="p">)</span>
+    <span class="n">labels_tensor</span> <span class="o">=</span> <span class="nf">pad_sequence</span><span class="p">(</span><span class="n">labels_list</span><span class="p">,</span> <span class="n">batch_first</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">padding_value</span><span class="o">=-</span><span class="mi">100</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">input_ids</span><span class="p">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">attention_mask</span><span class="p">.</span><span class="n">shape</span> <span class="ow">and</span> <span class="n">attention_mask</span><span class="p">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">labels_tensor</span><span class="p">.</span><span class="n">shape</span>
+
+    <span class="k">return</span> <span class="n">input_ids</span><span class="p">.</span><span class="nf">to</span><span class="p">(</span><span class="n">local_rank</span><span class="p">),</span> <span class="n">attention_mask</span><span class="p">.</span><span class="nf">to</span><span class="p">(</span><span class="n">local_rank</span><span class="p">),</span> <span class="n">labels_tensor</span><span class="p">.</span><span class="nf">to</span><span class="p">(</span><span class="n">local_rank</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>This function appends chosen and rejected responses sequentially into a batch, pad_sequence ued to align the length of the batch. attention_mask is used as an input for attention score computation, and labels are used for loss computation.</p>
+
+<p><strong>- Forward current model</strong></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">with</span> <span class="n">torch</span><span class="p">.</span><span class="nf">autocast</span><span class="p">(</span><span class="n">device_type</span><span class="o">=</span><span class="sh">'</span><span class="s">cuda</span><span class="sh">'</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="p">.</span><span class="n">bfloat16</span><span class="p">):</span>
+    <span class="n">outputs</span> <span class="o">=</span> <span class="nf">model</span><span class="p">(</span><span class="n">input_ids</span><span class="p">,</span> <span class="n">attention_mask</span><span class="o">=</span><span class="n">attention_mask</span><span class="p">)</span>
+<span class="n">logits</span>  <span class="o">=</span> <span class="n">outputs</span><span class="p">.</span><span class="n">logits</span> <span class="c1">#.float()  # [B*2, T, V]
+</span></code></pre></div></div>
+
+<p>Here logits denote the output logits of the LLM.</p>
+
+<p><strong>- Forward ref model (no grad)</strong></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="k">with</span> <span class="n">torch</span><span class="p">.</span><span class="nf">no_grad</span><span class="p">():</span>
+    <span class="k">with</span> <span class="n">torch</span><span class="p">.</span><span class="nf">autocast</span><span class="p">(</span><span class="n">device_type</span><span class="o">=</span><span class="sh">'</span><span class="s">cuda</span><span class="sh">'</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="p">.</span><span class="n">bfloat16</span><span class="p">):</span>
+        <span class="n">ref_outputs</span> <span class="o">=</span> <span class="nf">ref_model</span><span class="p">(</span><span class="n">input_ids</span><span class="p">,</span> <span class="n">attention_mask</span><span class="o">=</span><span class="n">attention_mask</span><span class="p">)</span>
+    <span class="n">ref_logits</span>  <span class="o">=</span> <span class="n">ref_outputs</span><span class="p">.</span><span class="n">logits</span> 
+</code></pre></div></div>
+
+<p>Here ref_logits denote the output logits of the reference LLM.</p>
+
+<p><strong>- Shift logits and labels</strong></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">logits</span> <span class="o">=</span> <span class="n">logits</span><span class="p">[...,:</span><span class="o">-</span><span class="mi">1</span><span class="p">,:].</span><span class="nf">contiguous</span><span class="p">()</span> <span class="c1"># [2B, T-1, V]
+</span><span class="n">ref_logits</span> <span class="o">=</span> <span class="n">ref_logits</span><span class="p">[...,:</span><span class="o">-</span><span class="mi">1</span><span class="p">,:].</span><span class="nf">contiguous</span><span class="p">()</span> <span class="c1"># [2B, T-1, V]
+</span><span class="n">labels</span> <span class="o">=</span> <span class="n">labels</span><span class="p">[...,</span><span class="mi">1</span><span class="p">:].</span><span class="nf">contiguous</span><span class="p">()</span> <span class="c1"># [2B, T-1]
+</span></code></pre></div></div>
+
+<p>This shift is required for cross-entropy loss computation.</p>
+
+<p><strong>- Compute per-token NLLs</strong></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">V</span> <span class="o">=</span> <span class="n">logits</span><span class="p">.</span><span class="nf">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">loss_t</span>  <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="nf">cross_entropy</span><span class="p">(</span>
+    <span class="n">logits</span><span class="p">.</span><span class="nf">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">V</span><span class="p">),</span> <span class="n">labels</span><span class="p">.</span><span class="nf">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+    <span class="n">ignore_index</span><span class="o">=-</span><span class="mi">100</span><span class="p">,</span> <span class="n">reduction</span><span class="o">=</span><span class="sh">"</span><span class="s">none</span><span class="sh">"</span>
+<span class="p">).</span><span class="nf">view</span><span class="p">(</span><span class="n">logits</span><span class="p">.</span><span class="nf">size</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">ref_loss</span><span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="nf">cross_entropy</span><span class="p">(</span>
+    <span class="n">ref_logits</span><span class="p">.</span><span class="nf">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">V</span><span class="p">),</span> <span class="n">labels</span><span class="p">.</span><span class="nf">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+    <span class="n">ignore_index</span><span class="o">=-</span><span class="mi">100</span><span class="p">,</span> <span class="n">reduction</span><span class="o">=</span><span class="sh">"</span><span class="s">none</span><span class="sh">"</span>
+<span class="p">).</span><span class="nf">view</span><span class="p">(</span><span class="n">ref_logits</span><span class="p">.</span><span class="nf">size</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>Here <code class="language-plaintext highlighter-rouge">loss_t</code> represents elementwise $-\log \pi_\theta(o_t \mid o_{&lt;t},x)$  and <code class="language-plaintext highlighter-rouge">ref_loss</code> elementwise $-\log \pi_{\mathrm{ref}}(o_t \mid o_{&lt;t},x)$.</p>
+
+<p><strong>- Sum to get sequence NLL</strong></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">nll_seq</span>     <span class="o">=</span> <span class="n">loss_t</span><span class="p">.</span><span class="nf">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">ref_nll_seq</span> <span class="o">=</span> <span class="n">ref_loss</span><span class="p">.</span><span class="nf">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>Note by chain rule $\log\pi(y \mid x) = \log \prod_t \pi(o_t \mid o_{&lt;t},x)=\sum\log \pi(o_t \mid o_{&lt;t}, x)$, this convert elementwise <code class="language-plaintext highlighter-rouge">loss_t</code> and <code class="language-plaintext highlighter-rouge">ref_loss</code> to $-\log \pi_\theta\left(y_w \mid x\right)$ and $-\log \pi_{\mathrm{ref}}\left(y_w \mid x\right)$.</p>
+
+<p><strong>- Inner</strong></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">diff_theta</span> <span class="o">=</span> <span class="n">nll_r</span> <span class="o">-</span> <span class="n">nll_c</span>
+<span class="n">diff_ref</span>   <span class="o">=</span> <span class="n">ref_r</span> <span class="o">-</span> <span class="n">ref_c</span>
+<span class="n">inner</span>      <span class="o">=</span> <span class="n">beta</span> <span class="o">*</span> <span class="p">(</span><span class="n">diff_theta</span> <span class="o">-</span> <span class="n">diff_ref</span><span class="p">)</span>
+</code></pre></div></div>
+<p>This computes $\beta \log \frac{\pi_\theta\left(y_w \mid x\right)}{\pi_{\mathrm{ref}}\left(y_w \mid x\right)}-\beta \log \frac{\pi_\theta\left(y_l \mid x\right)}{\pi_{\mathrm{ref}}\left(y_l \mid x\right)}$</p>
+
+<p><strong>- DPO loss</strong></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">dpo_loss</span>   <span class="o">=</span> <span class="o">-</span><span class="n">F</span><span class="p">.</span><span class="nf">logsigmoid</span><span class="p">(</span><span class="n">inner</span><span class="p">).</span><span class="nf">mean</span><span class="p">()</span> 
+</code></pre></div></div>
+
+<p>This computes \(\mathcal{L}_{\mathrm{DPO}}(\pi_\theta,\pi_{\mathrm{ref}})\) . Note <code class="language-plaintext highlighter-rouge">F.logsigmoid</code> is crucial for numerical stability.</p>
+
+<h2 id="miscellaneous">Miscellaneous</h2>
+
+<p>Also see this on twitter:</p>
+<div class="jekyll-twitter-plugin"><blockquote class="twitter-tweet" data-width="500"><p lang="en" dir="ltr">I implemented GRPO and DPO from scratch in vanilla Pytorch to unravel every piece of training details. Hope it could be helpful for those who care about the implementation details of the algorithms. 👉 <a href="https://t.co/1Exq7GTkLY">https://t.co/1Exq7GTkLY</a> <a href="https://twitter.com/hashtag/AI?src=hash&amp;ref_src=twsrc%5Etfw">#AI</a> <a href="https://twitter.com/hashtag/RL?src=hash&amp;ref_src=twsrc%5Etfw">#RL</a> <a href="https://twitter.com/hashtag/LLM?src=hash&amp;ref_src=twsrc%5Etfw">#LLM</a></p>&mdash; Ming Yin (@MingYin_0312) <a href="https://twitter.com/MingYin_0312/status/1955351703626154017?ref_src=twsrc%5Etfw">August 12, 2025</a></blockquote>
+<script async="" src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+</div>
+
+<!-- 
+
+****
+
+****
+ -->
+
+<!-- ## Miscellaneous
+
+My nice collaborator also shared this on twitter: 
+<div class='jekyll-twitter-plugin'><blockquote class="twitter-tweet" data-width="500"><p lang="en" dir="ltr">New preprint on offline RL:<a href="https://t.co/2vv2KLA1TF">https://t.co/2vv2KLA1TF</a><br><br>* A variance reduction algorithm for offline RL<br>* Optimal horizon dependence: O(H^2/d_m) sample complexity on time-homogeneous MDPs<br><br>Joint w/ Ming Yin (<a href="https://twitter.com/MingYin_0312?ref_src=twsrc%5Etfw">@MingYin_0312</a>) and Yu-Xiang Wang</p>&mdash; Yu Bai (@yubai01) <a href="https://twitter.com/yubai01/status/1358887058274570241?ref_src=twsrc%5Etfw">February 8, 2021</a></blockquote>
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+</div> -->]]></content><author><name>Ming Yin</name></author><summary type="html"><![CDATA[This post explains my pytorch implementation of Direct Preference Optimization Algorithm.]]></summary></entry><entry><title type="html">On Reinforcement Learning for Large Language Models</title><link href="https://mingyin0312.github.io/blog/2025/rl-llm/" rel="alternate" type="text/html" title="On Reinforcement Learning for Large Language Models" /><published>2025-01-07T00:00:00+00:00</published><updated>2025-01-07T00:00:00+00:00</updated><id>https://mingyin0312.github.io/blog/2025/rl-llm</id><content type="html" xml:base="https://mingyin0312.github.io/blog/2025/rl-llm/"><![CDATA[<p>Reinforcement Learning seems to be the right learning paradigm for AI (if we believe AI should think like us). Why? If we have a goal, we take action and get feedback, and then we learn from the feedback until we achieve the goal.</p>
+
+<h3 id="rl-with-reward-signal">RL with Reward Signal</h3>
+
+<p>Arguably, the most convincing RL method so far is Alpha-Go/Zero <d-cite key=" silver2016mastering,silver2017mastering"></d-cite>. In July 2024, Google-Deepmind presented AlphaProof, a new reinforcement-learning-based system for formal math reasoning. When tackling this year’s International Mathematical Olympiad, it achieved the same level as a silver medalist in the competition.</p>
+
+<p>It utilizes models to generate proofs, uses reward oracle (formal language Lean) to generate feedback (right or wrong), and uses RL algorithms to optimize. It becomes successful by scaling up the model. Of course, there are many other components, such as the Formalizer network, but, as mentioned in <a href="https://www.youtube.com/watch?v=pkpJMNjvgXw">David’s talk</a>, <strong>it is essentially just RL at a large scale.</strong></p>
+
+<p>Another example is the ongoing <a href="https://www.youtube.com/watch?v=yCIYS9fx56U">Reinforcement Fine-Tunning</a> (RFT)  from OpenAI. This program allows developers to fine-tune existing models by providing a small set (dozens to thousands) of high-quality questions and reference answers. It says, “This technique reinforces how the model reasons through similar problems and improves its accuracy on specific tasks in that domain.” This is quite exciting, as we can use only a small number of samples (I think 10-1000 is small nowadays) to achieve amazing performance in advanced scientific tasks via RL algorithms.</p>
+
+<p>More importantly, these are truly what humans do when facing a new task: We take action and get feedback, then “learn from the feedback” until we achieve our goal. This makes the idea of RL so natural for learning and improving the LLMs/AI. And then, different “learn from the feedback” will yield different RL algorithms.</p>
+
+<p>Good RL algorithms for LLMs are akin to good learning habits in humans.</p>
+
+<h3 id="offline-rl-vs-imitation-learning">Offline RL vs. Imitation Learning</h3>
+
+<p>RL has yet to exhibit its full potential for LLMs. Existing post-training/fine-tunning methods are mostly “Imitation Learning” style. For example, the popular Direct Preference Optimization algorithm uses the Bradley-Terry model to construct the negative log-likelihood loss over the preference data—essentially an imitation learning approach.</p>
+
+<p>What offline RL should do is stitch, effectively ‘stitching’ together (and also modifying) parts of the historical demonstrations to generate unseen, higher-quality ones. This idea is reminiscent of how we write papers—We have all the existing papers and leverage existing techniques together to generate new techniques/results.</p>
+
+<p>It is natural that the same thing should happen to LLMs, which is offline RL (Of course, we should not go too far to forget the safety concerns, so adding a KL regularizer :)). There are some efforts in the simulated robotics tasks <d-cite key=" hepburn2022model,zhou2024free"></d-cite>, but very few for LLMs (if any).</p>
+
+<h3 id="rl-without-feedback">RL without Feedback</h3>
+
+<p>In many situations, having feedback is not possible, and the RL loop contains only state and action. In this case, humans can still learn from previous responses/actions (historical data), reasoning about them, and coming up with an improved solution. It might be critical that LLMs also consider this perspective.</p>
+
+<h3 id="a-bright-future-for-rl">A Bright Future for RL</h3>
+
+<p>While RL has its limitations and challenges, its potential for advancing AI is immense. From improving LLMs to tackling complex problems like formal reasoning and beyond, RL offers a natural, human-like learning paradigm. Let’s focus on the bright side as we continue to explore its possibilities!</p>
+
+<hr />
+
+<h3 id="0221-update-rl-significantly-improves-math-reasoning-on-the-gsm8k-data">02/21 Update: RL significantly improves Math Reasoning on the GSM8K Data</h3>
+
+<p><a href="https://api-docs.deepseek.com/news/news250120">DeepSeek-R1(-Zero)</a> exhibits surprising capability for reasoning tasks such as Math and Coding <d-cite key=" guo2025deepseek"></d-cite>, rivaling openai-o1.</p>
+
+<p>I also tried it myself, and here is my Setup:</p>
+
+<ul>
+  <li>
+    <p>Base Model: <a href="https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct">Qwen2.5-1.5B-Instruct</a>;</p>
+  </li>
+  <li>
+    <p>Dataset: <a href="https://huggingface.co/datasets/openai/gsm8k">GSM8K</a>; Training size: 7472 , Testing size: 1319.</p>
+  </li>
+</ul>
+
+<p>RL Training:</p>
+
+<ul>
+  <li>
+    <p>Group Relative Policy Optimization (GRPO) <d-cite key="shao2024deepseekmath"></d-cite>, <code class="language-plaintext highlighter-rouge">GRPOConfig, GRPOTrainer</code> from <code class="language-plaintext highlighter-rouge">trl.trainer</code>;</p>
+  </li>
+  <li>
+    <p>Epoch: 1, Learning Rate: 1e-5;</p>
+  </li>
+  <li>
+    <p>8 H100s training for 5Hrs.</p>
+  </li>
+</ul>
+
+<p>SFT Training:</p>
+
+<ul>
+  <li>
+    <p>Supervised Fine-tuning, <code class="language-plaintext highlighter-rouge">SFTTrainer, SFTConfig</code> from <code class="language-plaintext highlighter-rouge">trl</code>;</p>
+  </li>
+  <li>
+    <p>Epoch: 2, Learning Rate: 1e-6; The (Epoch, Learning Rate) pair is determined after hyperparameter search, This setup gives the highest accuracy on the test set;</p>
+  </li>
+  <li>
+    <p>4 H100s training for 10Mins.</p>
+  </li>
+</ul>
+
+<p>Evaluation:</p>
+
+<ul>
+  <li>Correct if <code class="language-plaintext highlighter-rouge">generated_answer == true_answer</code>.</li>
+</ul>
+
+<div class="row mt-3">
+    <div class="col-sm mt-3 mt-md-0 text-center">
+        <img class="img-fluid rounded z-depth-1" src="/assets/img/RLLLM.png" style="width: 65%; height: auto;" />
+    </div>
+</div>
+
+<p><br /><br /></p>
+
+<p><strong>Takeaway:</strong> Reinforcement Learning significantly enhances the original model’s performance by 27% and surpasses the SFT approach by nearly 20%. This demonstrates RL’s strong potential for tackling challenging reasoning tasks! However, this improvement comes at the cost of increased computational overhead. The code is available <a href="https://github.com/mingyin0312/RL4LLM?tab=readme-ov-file">here</a>.</p>]]></content><author><name>Ming Yin</name></author><summary type="html"><![CDATA[A personal thinking on why reinforcement learning is vital for Large Language Models. [Updated 02/21]]]></summary></entry><entry><title type="html">Flow models for Generative AI</title><link href="https://mingyin0312.github.io/blog/2024/flow-models/" rel="alternate" type="text/html" title="Flow models for Generative AI" /><published>2024-09-01T00:00:00+00:00</published><updated>2024-09-01T00:00:00+00:00</updated><id>https://mingyin0312.github.io/blog/2024/flow-models</id><content type="html" xml:base="https://mingyin0312.github.io/blog/2024/flow-models/"><![CDATA[<p>A <strong>flow</strong> formalizes the idea of the motion of particles in a fluid and it is fundamental to the study of ordinary differential equations (ODEs). A flow may be viewed as a continuous motion of points over time, and they are ubiquitous in science, including engineering and physics. In modern AI era, flow models find its own shining point since NeuralODE <d-cite key="chen2018neural"></d-cite> that describes a family of deep learning models with nice properties. Recently, generative AI has elevated the power of AI to new levels. The development of flow models makes them suitable for generation, enhancing their relevance in generative AI. In this post, we discuss how flow models work from the methodology perspective.</p>
+
+<div class="row mt-3">
+    <div class="col-sm mt-3 mt-md-0">
+        <img class="img-fluid rounded z-depth-1" src="/assets/img/sd3_elevator.png" />
+    </div>
+    <div class="col-sm mt-3 mt-md-0">
+        <img class="img-fluid rounded z-depth-1" src="/assets/img/sd3_fox.png" />
+    </div>
+</div>
+<div class="row mt-3">
+    <div class="col-sm mt-3 mt-md-0">
+        <img class="img-fluid rounded z-depth-1" src="/assets/img/sd3_river.png" />
+    </div>
+    <div class="col-sm mt-3 mt-md-0">
+        <img class="img-fluid rounded z-depth-1" src="/assets/img/sd3_ufo.png" />
+    </div>
+</div>
+<div class="caption">
+    My generations using Stable Diffusion 3 <d-cite key="esser2024scaling"></d-cite> with Rectified Flow models <d-cite key="liu2022flow"></d-cite> being its building blocks.
+</div>
+
+<h2 id="preliminaries">Preliminaries</h2>
+
+<h3 id="ode-and-continuity-equations">ODE and Continuity Equations</h3>
+
+<p>Let the data point $x=(x^1,\ldots,x^d)\in\mathbb{R}^d$. A <em>probability density path</em> $p:[0,1]\times \mathbb{R}^d\rightarrow \mathbb{R}_{&gt;0}$ satisfies $\int p_t(x)dx=1$. A time-dependent vector field $v:[0,1]\times \mathbb{R}^d\rightarrow \mathbb{R}^d$ defines a (time-dependent diffeomorphic) flow with $\phi:[0,1]\times \mathbb{R}^d\rightarrow\mathbb{R}^d$ via the ODE:</p>
+
+\[\frac{d}{dt}\phi_t(x)=v_t(\phi_t(x)),\quad \phi_0(x)=x.\]
+
+<p>density $p_0$ evolves to $p_1$ with the push-forward operator</p>
+
+\[p_t=[\phi_t]_{*}p_0,\quad [\phi_t]_{*}p_0(x) = p_0(\phi_t^{-1}(x))\mathrm{det}\left[\frac{\partial \phi_t^{-1}}{\partial x}(x)\right].\]
+
+<p>Then the following theorem holds.</p>
+
+<hr />
+
+<p><strong>Theorem</strong> A vector field $v_t$ is said to generate a probability density path $p_t$ if its flow $\phi_t$ satisfies the continuity equation</p>
+
+\[\frac{d}{dt}p_t(x)+\mathrm{div}(p_t(x)v_t(x))=0.\]
+
+<hr />
+
+<p><strong>Proof [Adopted from <d-cite key="bworld"></d-cite>]</strong> Since $p_t=[\phi_t]_{*}p_0$, by change of variables for any measurable fucntion $g$ we have $\int g(\phi_t(y))p_t(y)dy=\int g(y)p_0(x)dx$. Next, by ODE we have $\partial_t\phi_t = v_t\circ \phi_t$.</p>
+
+<p>For any test function $\psi\in\mathcal{C}_c^\infty((0,1]\times \mathbb{R}^n)$, it suffices to show for any $T\in(0,1]$</p>
+
+<p>\begin{equation}\label{eq:int_ce}
+    \int_0^T\int_{\mathbb{R}^n}\psi_t\partial_tp_tdxdt = -\int_0^T\int_{\mathbb{R}^n}\psi_t\mathrm{div}(p_t\cdot v_t)dx dt
+\end{equation}</p>
+
+<p>By integration by parts, we have</p>
+
+\[\left[\int_{\mathbb{R}^n} \psi_t p_t d x\right]_{t=0}^{t=T}-\int_0^T \partial_t \psi_t p_t d x d t=\int_0^T \nabla \psi_t \cdot v_t p_t d x d t,\]
+
+<p>hence \eqref{eq:int_ce} is equivalent to</p>
+
+\[\int_{\mathbb{R}^n} \psi_t p_T d x-\int_{\mathbb{R}^n} \psi_t p_0 d x=\int_0^T \int_{\mathbb{R}^n}\left(\partial_t \psi_t\right) p_t+v_t \cdot \nabla \psi_t p_t d x d t.\]
+
+<p>To show this, compute the derivate to obtain</p>
+
+\[\frac{d}{d t} \int_{\mathbb{R}^n} \psi_t p_t d x  =\frac{d}{d t} \int_{\mathbb{R}^n} \psi_t\left(t, \phi_t(y)\right) p_0(y) d y=\int_{\mathbb{R}^n} \frac{d}{d t} \psi\left(t, \phi_t(y)\right) p_0(y) d y\]
+
+\[\text { (chain rule) }  =\int_{\mathbb{R}^n}\left[\partial_t \psi_t\left(t, \phi_t(y)\right)+\nabla \psi_t\left(t, \phi_t(y)\right) \cdot \partial_t \phi_t(y)\right] p_0(y) d y\]
+
+\[\left(\partial_t \phi_t=v_t \circ \phi_t\right) =\int_{\mathbb{R}^n}\left[\partial_t \psi_t\left(t, \phi_t(y)\right)+\nabla \psi_t\left(t, \phi_t(y) \cdot v_t\left(\phi_t(y)\right)\right] p_0(y) d y\right.\]
+
+\[\text { (change of variables) } =\int_{\mathbb{R}^n}\left[\partial_t \psi_t(t, x)+\nabla \psi_t(t, x) \cdot v_t(x)\right] p_t(x) dx\]
+
+<p>where the last line assgins $g(x)=\partial_t \psi_t(t, x)+\nabla \psi_t(t, x) \cdot v_t(x)$. Integrate both sides from $0$ to $T$ to complete the proof.</p>
+
+<h3 id="probability-flow-ode">Probability Flow ODE</h3>
+
+<p><strong>Theorem (PF ODE)</strong> For stochastic differential equation (SDE) with the form (where $\mathbf{f}(\cdot, t): \mathbb{R}^d \rightarrow \mathbb{R}^d$, $\mathbf{G}(\cdot, t): \mathbb{R}^d \rightarrow \mathbb{R}^{d \times d}$ and $\mathbf{w}$ be the $d$-dimensional Brownian motion):</p>
+
+<p>\begin{equation}\label{eqn:SDE}
+\mathrm{d} \mathbf{x}=\mathbf{f}(\mathbf{x}, t) \mathrm{d} t+\mathbf{G}(\mathbf{x}, t) \mathrm{d} \mathbf{w},
+\end{equation}</p>
+
+<p>and let its marginal probability density be $p_t(\mathbf{x}(t))$, then the following probability flow ODE</p>
+
+\[\mathrm{d} \mathbf{x}=\tilde{\mathbf{f}}(\mathbf{x}, t) \mathrm{d} t\]
+
+<p>is also distributed according to $p_t(\mathbf{x}(t))$, given the same initial condition. Here $\tilde{\mathbf{f}}(\mathbf{x}, t):=\mathbf{f}(\mathbf{x}, t)-\frac{1}{2} \nabla \cdot\left[\mathbf{G}(\mathbf{x}, t) \mathbf{G}(\mathbf{x}, t)^{\top}\right]-\frac{1}{2} \mathbf{G}(\mathbf{x}, t) \mathbf{G}(\mathbf{x}, t)^{\top} \nabla_{\mathbf{x}} \log p_t(\mathbf{x})$.</p>
+
+<p><strong>Remark: [special case]</strong> For the simplified process</p>
+
+\[\mathrm{d} \mathbf{x}=\mathbf{f}(\mathbf{x}, t) \mathrm{d} t+g(t) \mathrm{d} \mathbf{w}\]
+
+<p>where $g(\cdot): \mathbb{R} \rightarrow \mathbb{R}$ is a scalar function, its probability flow ODE</p>
+
+\[\mathrm{d} \mathbf{x}=\left\{\mathbf{f}(\mathbf{x}, t)-\frac{1}{2} g^2(t) \nabla_{\mathbf{x}} \log p_t(\mathbf{x})\right\} \mathrm{d} t.\]
+
+<p><strong>Proof [Adopted from <d-cite key="song2020score"></d-cite>]</strong> Since the SDE’s \eqref{eqn:SDE} marginal probability density $p_t(\mathbf{x}(t))$ evolves according to Kolmogorov’s forward equation <d-cite key="KFE"></d-cite></p>
+
+\[\frac{\partial p_t(\mathbf{x})}{\partial t}=-\sum_{i=1}^d \frac{\partial}{\partial x_i}\left[f_i(\mathbf{x}, t) p_t(\mathbf{x})\right]+\frac{1}{2} \sum_{i=1}^d \sum_{j=1}^d \frac{\partial^2}{\partial x_i \partial x_j}\left[\sum_{k=1}^d G_{i k}(\mathbf{x}, t) G_{j k}(\mathbf{x}, t) p_t(\mathbf{x})\right],\]
+
+<p>hence the above can be rewritten as</p>
+
+\[\begin{aligned}
+\frac{\partial p_t(\mathbf{x})}{\partial t} &amp; =-\sum_{i=1}^d \frac{\partial}{\partial x_i}\left[f_i(\mathbf{x}, t) p_t(\mathbf{x})\right]+\frac{1}{2} \sum_{i=1}^d \sum_{j=1}^d \frac{\partial^2}{\partial x_i \partial x_j}\left[\sum_{k=1}^d G_{i k}(\mathbf{x}, t) G_{j k}(\mathbf{x}, t) p_t(\mathbf{x})\right] \\
+&amp; =-\sum_{i=1}^d \frac{\partial}{\partial x_i}\left[f_i(\mathbf{x}, t) p_t(\mathbf{x})\right]+\frac{1}{2} \sum_{i=1}^d \frac{\partial}{\partial x_i}\left[\sum_{j=1}^d \frac{\partial}{\partial x_j}\left[\sum_{k=1}^d G_{i k}(\mathbf{x}, t) G_{j k}(\mathbf{x}, t) p_t(\mathbf{x})\right]\right]
+\end{aligned}\]
+
+<p>Since</p>
+
+\[\begin{aligned}
+&amp; \sum_{j=1}^d \frac{\partial}{\partial x_j}\left[\sum_{k=1}^d G_{i k}(\mathbf{x}, t) G_{j k}(\mathbf{x}, t) p_t(\mathbf{x})\right] \\
+= &amp; \sum_{j=1}^d \frac{\partial}{\partial x_j}\left[\sum_{k=1}^d G_{i k}(\mathbf{x}, t) G_{j k}(\mathbf{x}, t)\right] p_t(\mathbf{x})+\sum_{j=1}^d \sum_{k=1}^d G_{i k}(\mathbf{x}, t) G_{j k}(\mathbf{x}, t) p_t(\mathbf{x}) \frac{\partial}{\partial x_j} \log p_t(\mathbf{x}) \\
+= &amp; p_t(\mathbf{x}) \nabla \cdot\left[\mathbf{G}(\mathbf{x}, t) \mathbf{G}(\mathbf{x}, t)^{\top}\right]+p_t(\mathbf{x}) \mathbf{G}(\mathbf{x}, t) \mathbf{G}(\mathbf{x}, t)^{\top} \nabla_{\mathbf{x}} \log p_t(\mathbf{x}),
+\end{aligned}\]
+
+<p>denote $\tilde{\mathbf{f}}(\mathbf{x}, t):=\mathbf{f}(\mathbf{x}, t)-\frac{1}{2} \nabla \cdot\left[\mathbf{G}(\mathbf{x}, t) \mathbf{G}(\mathbf{x}, t)^{\top}\right]-\frac{1}{2} \mathbf{G}(\mathbf{x}, t) \mathbf{G}(\mathbf{x}, t)^{\top} \nabla_{\mathbf{x}} \log p_t(\mathbf{x})$, then</p>
+
+\[\begin{aligned}
+\frac{\partial p_t(\mathbf{x})}{\partial t}= &amp; -\sum_{i=1}^d \frac{\partial}{\partial x_i}\left[f_i(\mathbf{x}, t) p_t(\mathbf{x})\right]+\frac{1}{2} \sum_{i=1}^d \frac{\partial}{\partial x_i}\left[\sum_{j=1}^d \frac{\partial}{\partial x_j}\left[\sum_{k=1}^d G_{i k}(\mathbf{x}, t) G_{j k}(\mathbf{x}, t) p_t(\mathbf{x})\right]\right] \\
+= &amp; -\sum_{i=1}^d \frac{\partial}{\partial x_i}\left[f_i(\mathbf{x}, t) p_t(\mathbf{x})\right] \\
+&amp; +\frac{1}{2} \sum_{i=1}^d \frac{\partial}{\partial x_i}\left[p_t(\mathbf{x}) \nabla \cdot\left[\mathbf{G}(\mathbf{x}, t) \mathbf{G}(\mathbf{x}, t)^{\top}\right]+p_t(\mathbf{x}) \mathbf{G}(\mathbf{x}, t) \mathbf{G}(\mathbf{x}, t)^{\top} \nabla_{\mathbf{x}} \log p_t(\mathbf{x})\right] \\
+= &amp; -\sum_{i=1}^d \frac{\partial}{\partial x_i}\left\{f_i(\mathbf{x}, t) p_t(\mathbf{x})\right. \\
+&amp; \left.-\frac{1}{2}\left[\nabla \cdot\left[\mathbf{G}(\mathbf{x}, t) \mathbf{G}(\mathbf{x}, t)^{\top}\right]+\mathbf{G}(\mathbf{x}, t) \mathbf{G}(\mathbf{x}, t)^{\top} \nabla_{\mathbf{x}} \log p_t(\mathbf{x})\right] p_t(\mathbf{x})\right\} \\
+= &amp; -\sum_{i=1}^d \frac{\partial}{\partial x_i}\left[\tilde{f}_i(\mathbf{x}, t) p_t(\mathbf{x})\right]
+\end{aligned}\]
+
+<p>which is the Kolmogorov’s forward equation for the ODE</p>
+
+\[\mathrm{d} \mathbf{x}=\tilde{\mathbf{f}}(\mathbf{x}, t) \mathrm{d} t.\]
+
+<h2 id="flow-matching-">Flow Matching <d-cite key="lipman2022flow"></d-cite></h2>
+
+<p>The beginning setup:</p>
+
+<ul>
+    <li> Data $x_1$ distributed according to some unknown data distribution $q(x_1)$;
+   </li>
+    <li>
+    Probability path $p_t$ satisfies $p_0=p=\mathcal{N}(x|0,I)$;
+    </li>
+    <li>
+      $p_1$ is the roughly equal approximation of the data distribution $q$.
+  </li>
+</ul>
+<p>The Flow Matching objective is then designed to match this target probability path, which will allow us to flow from $p_0$ to $p_1$.</p>
+
+<h3 id="fm-objective">FM Objective</h3>
+
+<p>Let $u_t(x)$ be the corresponding vector of the probability density path $p_t(x)$, then Flow Matching objective is defined as</p>
+
+\[\mathcal{L}_{\mathrm{FM}}(\theta)=\mathbb{E}_{t, p_t(x)}\left\|v_t(x)-u_t(x)\right\|^2\]
+
+<p>where $\theta$ is the parameter of $v_t(x,\theta)$, $t\sim \mathrm{Unif}[0,1]$ and $x\sim p_t(x)$. In general, the above flow matching loss is intractable as $u_t,p_t$ are unknowns. However, for a data sample $x_1$, we can model the conditional probabiltiy distribution $p_t(x|x_1)$ to satisfy $p_0(x| x_1)=p(x)$ and $p_0(x|x_1)=\mathcal{N}(x|x_1,\sigma^2I)$ with $\sigma^2$ sufficiently small. Then we can recover the marginal path</p>
+
+\[p_t(x)=\int p_t\left(x \mid x_1\right) q\left(x_1\right) d x_1,\]
+
+<p>with $p_1(x)=\int p_1\left(x \mid x_1\right) q\left(x_1\right) d x_1 \approx q(x)$. Importantly, let $u_t(x)$ be the vector field that generates $p_t(x)$ and $u_t(x|x_1)$ be the vector field that generates $p_t(x|x_1)$, then it follows</p>
+
+<p>\begin{equation}\label{eqn:equal} 
+u_t(x)=\int u_t\left(x \mid x_1\right) \frac{p_t\left(x \mid x_1\right) q\left(x_1\right)}{p_t(x)} d x_1
+\end{equation}</p>
+
+<p><strong>Proof of \eqref{eqn:equal}.</strong> Notice that</p>
+
+<p>\(\begin{aligned}
+\frac{d}{d t} p_t(x) &amp; =\int\left(\frac{d}{d t} p_t\left(x \mid x_1\right)\right) q\left(x_1\right) d x_1=-\int \operatorname{div}\left(u_t\left(x \mid x_1\right) p_t\left(x \mid x_1\right)\right) q\left(x_1\right) d x_1 \\
+&amp; =-\operatorname{div}\left(\int u_t\left(x \mid x_1\right) p_t\left(x \mid x_1\right) q\left(x_1\right) d x_1\right)=-\operatorname{div}\left(u_t(x) p_t(x)\right).
+\end{aligned}\)
+From Preliminaries section, we finish the proof.</p>
+
+<p>Given CF, we can consider the <em>Conditional Flow Matching</em> defined as follows</p>
+
+\[\mathcal{L}_{\text {CFM }}(\theta)=\mathbb{E}_{t, q\left(x_1\right), p_t\left(x \mid x_1\right)}\left\|v_t(x)-u_t\left(x \mid x_1\right)\right\|^2.\]
+
+<p>Furthermore, CFM loss not only make the objective tractable, more importantly, 
+it is equivalent to optimize the FM loss, i.e. 
+\(\nabla_\theta \mathcal{L}_{F M}(\theta)=\nabla_\theta \mathcal{L}_{C F M}(\theta)\) (Theorem 2 of <d-cite key="lipman2022flow"></d-cite>). As a result, we work with $\mathcal{L}_{\text {CFM }}(\theta)$ for the rest of the article.</p>
+
+<h3 id="guassian-conditional-probability-paths">Guassian Conditional Probability Paths</h3>
+
+<p>We model the conditional probability paths via Guassian. Concretely, we consider</p>
+
+\[p_t\left(x \mid x_1\right)=\mathcal{N}\left(x \mid \mu_t\left(x_1\right), \sigma_t\left(x_1\right)^2 I\right)\]
+
+<p>with $\mu:[0,1]\times \mathbb{R}^d\rightarrow \mathbb{R}^d$ and $\sigma:[0,1]\times \mathbb{R}\rightarrow \mathbb{R}$ to be the time-dependent mean and std. We set $\mu_0(x_1)=0,\sigma_0(x_1)=1$ and $\mu_1(x_1)=x_1,\sigma_1(x_1)=\sigma_{\mathrm{min}}$ small. The flow (there are infinite many of them we simply choose one)</p>
+
+\[\psi_t(x\mid x_1)=\sigma_t\left(x_1\right) x+\mu_t\left(x_1\right)\]
+
+<p>generates \(p_t\left(x \mid x_1\right)=\mathcal{N}(x \mid \mu_t\left(x_1), \sigma_t\left(x_1\right)^2 I\right)\)  since \(\left[\psi_t\right]_* p(x)=p_t\left(x \mid x_1\right)\). Notice the corresponding conditional vector field $u_t(x|x_1)$ satisfies</p>
+
+\[\frac{d}{d t} \psi_t(x)=u_t\left(\psi_t(x) \mid x_1\right),\]
+
+<p>we can explicitly solve that (Theorem 3 of <d-cite key="lipman2022flow"></d-cite>)</p>
+
+\[u_t\left(x \mid x_1\right)=\frac{\sigma_t^{\prime}\left(x_1\right)}{\sigma_t\left(x_1\right)}\left(x-\mu_t\left(x_1\right)\right)+\mu_t^{\prime}\left(x_1\right).\]
+
+<p>By Reparameterizing $p_t(x\mid x_1)$ in terms of just $x_0$ in the CFM loss we get</p>
+
+\[\label{eqn:CFM_obj}
+\mathcal{L}_{\mathrm{CFM}}(\theta)=\mathbb{E}_{t, q\left(x_1\right), p\left(x_0\right)}\left\|v_t\left(\psi_t\left(x_0\right)\right)-\frac{\sigma_t^{\prime}\left(x_1\right)}{\sigma_t\left(x_1\right)}\left(x_0-\mu_t\left(x_1\right)\right)-\mu_t^{\prime}\left(x_1\right)\right\|^2.\]
+
+<h3 id="training-and-sampling">Training and Sampling</h3>
+
+<ul>
+    <li> Training: replacing $x_1,x_0$ in $\mathcal{L}_{\mathrm{CFM}}(\theta)$ with samples $x_1\sim q(x_1),x_0\sim p(x_0)$ and train the empirical objective;
+   </li>
+    <li>
+    Sampling: first draw a noise sample $x_0\sim p(x_0)=\mathcal{N}(0,I)$, then compute $\phi_1(x_0)$ via solving $$
+\frac{d}{dt}\phi_t(x)=v_t(\phi_t(x)),\quad \phi_0(x)=x.
+$$
+
+via ODE solvers.
+    </li>
+</ul>
+
+<h3 id="examples">Examples</h3>
+
+<p><strong>Diffusion conditional vector field.</strong> Variance Exploding path: $p_t(x\mid x_1)=\mathcal{N}\left(x \mid x_1, \sigma_{1-t}^2 I\right)$, and the vector field $u_t\left(x \mid x_1\right)=-\frac{\sigma_{1-t}^{\prime}}{\sigma_{1-t}}\left(x-x_1\right)$.</p>
+
+<p><strong>Optimal Transport conditional vector field.</strong> $\mu_t(x)=t x_1$, $\sigma_t(x)=1-\left(1-\sigma_{\min }\right) t$, and the vector field $u_t\left(x \mid x_1\right)=\frac{x_1-\left(1-\sigma_{\min }\right) x}{1-\left(1-\sigma_{\min }\right) t}$. The CFM loss takes the form</p>
+
+\[\mathcal{L}_{\mathrm{CFM}}(\theta)=\mathbb{E}_{t, q\left(x_1\right), p\left(x_0\right)}\left\|v_t\left(\psi_t\left(x_0\right)\right)-\left(x_1-\left(1-\sigma_{\min }\right) x_0\right)\right\|^2\]
+
+<p>which is very close to the Rectified flow models in the following section.</p>
+
+<h2 id="rectified-flow-">Rectified Flow <d-cite key="liu2022flow"></d-cite></h2>
+
+<p><strong>Methods</strong> Given empirical observations of $X_0\sim\pi_0,X_1\sim \pi_1$, the rectified flow induced from $(X_0,X_1)$ is an ODE $dZ_t=v(Z_t,t)dt$ that converts $Z_0\sim \pi_0$ to $Z_1\sim \pi_1$. The vector field $v: [0,1]\times\mathbb{R}^d \rightarrow \mathbb{R}^d$ is set to drive the flow to follow the direction $X_1-X_0$ via a linear path:</p>
+
+\[\min_v \int_0^1 \mathbb{E}\left[\left\|\left(X_1-X_0\right)-v\left(X_t, t\right)\right\|^2\right] \mathrm{d} t, \quad \text { with } \quad X_t=t X_1+(1-t) X_0,\]
+
+<p>Clearly, $dX_t=(X_1-X_0)dt$, which makes the process $X_t$ non-causal.</p>
+
+<p><strong>Training and Sampling</strong> With empirical draws of $(X_0,X_1)$, we solve the above objective and get $v$. After getting $v$, we solve the ODE either starting from $Z_0\sim \pi_0$ to transfer $\pi_0$ to $\pi_1$, or backwardly starting from $Z_1\sim \pi_1$ to transfer $\pi_1$ to $\pi_0$. The obtained flow $(Z_0^k,Z_1^{k})$ can be used as input to reflow and obtain $(Z_0^{k+1},Z_1^{k+1})$ (see Algorithm 1 of <d-cite key="liu2022flow"></d-cite> for details).</p>
+
+<p><strong>A Nonlinear Extension</strong> Let $X=\{X_t: t \in[0,1] \}$ be any time-differentiable random process that connects $X_0$ and $X_1$. Let $\dot{X}_t$ be the time derivative of $X_t$. The (nonlinear) rectified flow induced from $X$ is defined as ($w_t$ is a positive weight sequence)</p>
+
+\[\mathrm{d} Z_t=v^{\boldsymbol{X}}\left(Z_t, t\right) \mathrm{d} t, \quad \text { with } \quad Z_0=X_0, \quad \text { and } \quad v^{\boldsymbol{X}}(z, t)=\mathbb{E}\left[\dot{X}_t \mid X_t=t\right].\]
+
+<p>[Theorem 3.3, 3.5-7 of <d-cite key="liu2022flow"></d-cite>] $X$ is rectifiable if $v^X$ is locally bounded and the solution of the integral equation below exists and is unique:</p>
+
+\[Z_t=Z_0+\int_0^t v^{\boldsymbol{X}}\left(Z_t, t\right) \mathrm{d} t, \quad \forall t \in[0,1], \quad Z_0=X_0\]
+
+<ul>
+    <li>Assume $X$ is rectifiable and $Z$ is its rectified flow. Then $$\operatorname{Law}\left(Z_t\right)=\operatorname{Law}\left(X_t\right) \text { for } \forall t \in[0,1]$$
+   </li>
+    <li>
+    Assume $(X_0, X_1)$ is rectifiable and $\left(Z_0, Z_1\right)=\texttt{Rectify}\left(\left(X_0, X_1\right)\right)$, then for any convex function $c: \mathbb{R}^d \rightarrow \mathbb{R}$, then 
+
+    $$
+    \mathbb{E}\left[c\left(Z_1-Z_0\right)\right] \leq \mathbb{E}\left[c\left(X_1-X_0\right)\right]
+    $$
+
+    </li>
+    <li>
+        Let $Z^k$ be the k-th rectified flow induced from $(X_0, X_1)$. Let the straightness be $S({Z})=\int_0^1 \mathbb{E}\left[\left\|\left(Z_1-Z_0\right)-\dot{Z}_t\right\|^2\right] d t$. Then
+
+        $$
+        \min _{k \in\{0 \cdots K\}} S\left(\boldsymbol{Z}^k\right) \leq \frac{\mathbb{E}\left[\left\|X_1-X_0\right\|^2\right]}{K}
+        $$
+
+    </li>
+</ul>
+
+<h2 id="other-flow-model-recipes">Other Flow Model Recipes</h2>
+
+<p>There are other different flow matching models that either improve the performance or the efficiency such as consistency model matching <d-cite key="yang2024consistency"></d-cite>, conditional flow matching <d-cite key="tong2023improving"></d-cite>, and latent flow matching <d-cite key="dao2023flow"></d-cite>.</p>
+
+<!-- 
+
+****
+
+****
+ -->
+
+<!-- ## Miscellaneous
+
+My nice collaborator also shared this on twitter: 
+<div class='jekyll-twitter-plugin'><blockquote class="twitter-tweet" data-width="500"><p lang="en" dir="ltr">New preprint on offline RL:<a href="https://t.co/2vv2KLA1TF">https://t.co/2vv2KLA1TF</a><br><br>* A variance reduction algorithm for offline RL<br>* Optimal horizon dependence: O(H^2/d_m) sample complexity on time-homogeneous MDPs<br><br>Joint w/ Ming Yin (<a href="https://twitter.com/MingYin_0312?ref_src=twsrc%5Etfw">@MingYin_0312</a>) and Yu-Xiang Wang</p>&mdash; Yu Bai (@yubai01) <a href="https://twitter.com/yubai01/status/1358887058274570241?ref_src=twsrc%5Etfw">February 8, 2021</a></blockquote>
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+</div> -->]]></content><author><name>Ming Yin, Mengdi Wang</name></author><summary type="html"><![CDATA[As an alternative to Diffusion Models, Continuous Normalizing Flow Matching is one of the most powerful paradigm for generative AI modeling.]]></summary></entry><entry><title type="html">Optimal offline RL with the unified model-based framework</title><link href="https://mingyin0312.github.io/blog/2021/unified-offline-rl/" rel="alternate" type="text/html" title="Optimal offline RL with the unified model-based framework" /><published>2021-06-24T00:00:00+00:00</published><updated>2021-06-24T00:00:00+00:00</updated><id>https://mingyin0312.github.io/blog/2021/unified-offline-rl</id><content type="html" xml:base="https://mingyin0312.github.io/blog/2021/unified-offline-rl/"><![CDATA[<p>The post explains the idea of paper <d-cite key="yin2021optimal"></d-cite>.</p>
+
+<h2 id="brief-background-on-several-offline-learning-tasks">Brief background on several Offline Learning tasks</h2>
+
+<p>Historical data $\mathcal{D}=\left\lbrace (s_t^{(i)},a_t^{(i)},r_t^{(i)})\right\rbrace_{i\in[n]}^{t\in[H]} $ was obtained by logging policy $\mu$ and we can only use $\mathcal{D}$ to estimate the value of target policy $\pi$, <em>i.e.</em> $v^\pi$. Suppose we only assume knowledge about $\pi$ and $r_t^{(i)} = r_t(s_t^{(i)},a_t^{(i)})$. The goal of offline learning task is to find an <em>$\epsilon$-optimal policy</em> $\pi_\text{out}$, such that</p>
+
+\[\left\lVert V_1^{\pi^\star}-V_1^{\pi_\text{out}}\right\rVert_\infty&lt;\epsilon.\]
+
+<p>Especially, <d-cite key="yin2021near"></d-cite> obtains the $\tilde{O}(H^3/d_m\epsilon^2)$ complexity for the local uniform OPE task and <d-cite key="yin2021optimal"></d-cite> improves the result to $\tilde{O}(H^2/d_m\epsilon^2)$ in the time-homogeneous setting, with model-based estimators. The key for the tight dependence is due to <strong>the singleton absrobing MDP technique</strong>, and importantly, such a technique is not confined to local uniform OPE task only and can be adapted to challening settings like offline task-agnostic learning and offline reward-free learning.</p>
+
+<h2 id="the-challenge-in-optimality-for-time-homogeneous-rl">The challenge in optimality for time-homogeneous RL</h2>
+
+<p>For analyzing either learning or uniform evaluation tasks, at some point one needs to apply concentration inequalities (usually Bernstein inequality for the sharp result) over the term $(\widehat{P}-P)\widehat{V}^\pi_t$ for the current estimates. Espeically, in offline RL, those $\widehat{P}$ are usually constructed via the model-based estimates (<em>e.g.</em> <d-cite key="kidambi2020morel"></d-cite>). When the MDP is time-inhomogeneous, \(\widehat{P}_t\) and $\widehat{V}^\pi_{t+1}$ are conditionally independent due to the construction</p>
+
+\[\widehat{P}_t(s^{\prime} \mid s, a)=\frac{\sum_{i=1}^n\mathbf{1}[(s^{(i)}_{t+1},a^{(i)}_t,s^{(i)}_t)=(s^\prime,s,a)]}{n_{s_t,a_t}}\]
+
+<p>and $n_{s_t,a_t}=\sum_{i=1}^n \mathbf{1}[s_t^{(i)},a_t^{(i)}=s,a]$. To further kill the dependence in $H$, the time-inhomogeneous case denotes $n_{s, a}:=\sum_{i=1}^{n} \sum_{h=1}^{H} \mathbf{1}\left[s_{h}^{(i)}, a_{h}^{(i)}=s, a\right]$ and uses the estimate</p>
+
+\[\widehat{P}\left(s^{\prime} \mid s, a\right)=\frac{\sum_{i=1}^{n} \sum_{h=1}^{H} \mathbf{1}\left[\left(s_{h+1}^{(i)}, a_{h}^{(i)}, s_{h}^{(i)}\right)=\left(s^{\prime}, s, a\right)\right]}{n_{s, a}}\]
+
+<p>In this scenario, $\widehat{P}$ and $\widehat{V}^\pi_{t+1}$ are no longer independent since $\widehat{P}$ uses the samples acorss different times. How to deal with it?</p>
+
+<h2 id="singleton-absorbing-mdp-a-sharp-analysis-tool">Singleton absorbing MDP: A sharp analysis tool</h2>
+
+<div class="row mt-3">
+    <div class="col-sm mt-3 mt-md-0">
+        <img class="img-fluid rounded z-depth-1" src="/assets/img/Singleton_MDP_1.pdf" />
+    </div>
+    <div class="col-sm mt-3 mt-md-0">
+        <img class="img-fluid rounded z-depth-1" src="/assets/img/Singleton_MDP_3.pdf" />
+    </div>
+</div>
+<div class="row mt-3">
+    <div class="col-sm mt-3 mt-md-0">
+        <img class="img-fluid rounded z-depth-1" src="/assets/img/Singleton_MDP_2.pdf" />
+    </div>
+    <div class="col-sm mt-3 mt-md-0">
+        <img class="img-fluid rounded z-depth-1" src="/assets/img/Singleton_MDP_4.pdf" />
+    </div>
+</div>
+<div class="caption">
+    The left panel shows the covering-based absorbing MDP, and the right panel shows the singleton absorbing MDP.
+</div>
+
+<p>The visualization can help understand the <em>singleton absorbing MDP</em> technique. The upper part demonstrates the infinite horizon case and the bottom part demonstrates the finite horizon case. In particular, it should be a $H$-dimensional hypercube $[0,H]^H$ (that contains $\widehat{V}^\star_1,\ldots,\widehat{V}^\star_h$) instead of only the square $[0,H]\times[0,H]$ ($\widehat{V}^\star_1,\widehat{V}^\star_2$). This is only for the ease of visualization.</p>
+
+<p>The standard absorbing MDP technique <d-cite key="agarwal2020model"></d-cite> leverages a set of absorbing MDPs to cover the range of value functions (following the standard covering principle) to make sure $\widehat{V}^\star$ is close to one of the element (absorbing MDP) in the set (left panel). The size of the covering set (<em>i.e.</em> the covering number) grows exponentially in $H$ in the finite horizon setting and this is due to the fact that there are $\widehat{V}^\star_1,\widehat{V}^\star_2,\ldots,\widehat{V}^\star_H$ quantities to cover. This results in the metric entropy to blow up by a factor of $H$ and incurs suboptimality. On the other hand, the singleton absorbing MDP $\widehat{V}^\star_{h,u^\star}$ can completely get rid of the covering issue, maintain the independence and  control the error propagation ($\lvert\lvert\widehat{V}^\star-\widehat{V}^\star_{u^\star}\rvert\rvert_\infty$ is sufficiently small).</p>
+
+<p>Now that for a state $s$ we can design $\widehat{V}^\star_{h,u^\star}$ such that \(\widehat{P}_s\) is independent of $\widehat{V}^\star_{h,u^\star}$ and concentration inequalities apply! (check <d-cite key="yin2021optimal"></d-cite> for details)</p>
+
+<h2 id="hightlights-of-our-results">Hightlights of our results</h2>
+
+<p>The model-based design together with the singleton absorbing MDP analysis is able to achieve the following:</p>
+
+<ul>
+    <li>For finite horizon time-invariant setting, $\epsilon$-optimal local uniform OPE is guaranteed with complexity $\tilde{O}(H^2/d_m\epsilon^2)$;
+   </li>
+    <li>
+    For finite horizon time-invariant setting, $\epsilon$-optimal policy is guaranteed with complexity $\tilde{O}(H^2\log(K)/d_m\epsilon^2)$ for the offline task-agnotic learning;
+    </li>
+    <li>
+    	For finite horizon time-invariant setting, $\epsilon$-optimal policy is guaranteed with complexity $\tilde{O}(H^2S/d_m\epsilon^2)$ for the offline reward-free learning;
+	</li>
+</ul>
+<p>All of above have minimax rates in their respective settings! If you are interested, please check <d-cite key="yin2021optimal"></d-cite> for a reference.</p>
+
+<h2 id="one-take-away">One Take-Away</h2>
+
+<p>One side product is that the singleton absorbing MDP works in the infinite horizon setting as well! This means singleton absorbing MDP is not only optimal and but also agnostic to the settings.</p>]]></content><author><name>Ming Yin</name></author><summary type="html"><![CDATA[A model-based framework + singleton absorbing MDP technique achieves the optimal rate for several challenging offline tasks.]]></summary></entry><entry><title type="html">A Brief Summary of Upper Bounds for Bandit Problems</title><link href="https://mingyin0312.github.io/blog/2021/bandit/" rel="alternate" type="text/html" title="A Brief Summary of Upper Bounds for Bandit Problems" /><published>2021-04-27T00:00:00+00:00</published><updated>2021-04-27T00:00:00+00:00</updated><id>https://mingyin0312.github.io/blog/2021/bandit</id><content type="html" xml:base="https://mingyin0312.github.io/blog/2021/bandit/"><![CDATA[<p>This post summarizes the regret analysis for multi-armed bandit problems and linear bandits problems.</p>
+
+<p>Specifically, the Exploration-first / epsilon-greedy algorithm achieves \(\tilde{O}(K^{1/3}T^{2/3})\) regret and UCB obtains \(\tilde{O}(\sqrt{KT})\) regret where \(K\) is the numberof arms for MAB. For linear bandits, LinUCB obtains \(\tilde{O}(\sigma d\sqrt{T})\) regret where \(d\) is the feature dimension. Let us start with the multi-armed bandit (MAB) problems!</p>
+
+<hr />
+
+<h3 id="1-multi-armed-bandit-mab-problems">1. Multi-armed bandit (MAB) problems</h3>
+
+<p>In MAB, we have \(K\) actions (the “arms”) and when we play arm \(i \in \{1, 2,\ldots, K \}\) we obtain a random
+reward \(r_i\) which has mean reward:</p>
+
+\[\mathbb{E}[r_i]=\mu_i, \quad |\mu_i|\leq 1.\]
+
+<p>Every iteration \(t\), the learner will pick an arm \(A_t \in [1, 2, \ldots, K ]\). The regret is defined as:</p>
+
+\[R_T=T\cdot \max_i \mu_i-\sum_{t=1}^T \mu_{A_t}.\]
+
+<p>The goal is to minimize the regret.</p>
+
+<hr />
+
+<h5 id="11-exploration-first-algorithm">1.1 Exploration-first algorithm</h5>
+
+<p><strong>Algorithm 1: Exploration-first</strong></p>
+
+<ul>
+    <li> 
+        
+Spend the first N step exploring, where each action is played for N/K times. The corresponding estimates for each action a is:
+
+$$
+\widehat{Q}_t(a)=\frac{\sum_{i=1}^{t}R_i\cdot \mathbf{1}[A_i=a]}{\sum_{i=1}^t \mathbf{1}[A_i=a]}, \quad a\in[K]
+$$
+   </li>
+   <li>
+   	For t = N+1,...,T:
+   	$$
+   	A_t:=\text{argmax}_a \widehat{Q}_t(a)
+   	$$
+   </li>
+
+</ul>
+
+<p><strong>Analysis of the Exploration-first algorithm</strong></p>
+
+<p>\(\textbf{Step1.}\) For any \(t\geq N\), by Hoeffding’s inequality and an union bound, w.p. \(1-\delta\)</p>
+
+\[\sup_{a\in[K]}|\widehat{Q}(a)-\mu_a|\leq \sqrt{\frac{K}{2N}\log(2K/\delta)}:=\epsilon\]
+
+<p>\(\textbf{Step2.}\) Regret for the Exploration phase:</p>
+
+\[R_{1:N}\leq \frac{N}{K}\sum_{a\in[K]}(\max_{a'}\mu_{a'}-\mu_a)\leq N\]
+
+<p>\(\textbf{Step3.}\) Regret for the Exploitation phase \(A_t\equiv \hat{a}^\star=\text{argmax}_a \widehat{Q}(a)\):</p>
+
+\[\begin{aligned}
+&amp; R_{N+1:T}\leq (T-N)\cdot (\mu_{a^\star}-\mu_{\hat{a}^\star})\\
+=&amp;(T-N)[\mu_{a^\star}-\widehat{Q}(a^\star)+\widehat{Q}(a^\star)-\widehat{Q}(\hat{a}^\star)+\widehat{Q}(\hat{a}^\star)-\mu_{\hat{a}^\star}]\\
+\leq &amp;(T-N)[\epsilon+0+\epsilon] 
+\end{aligned}\]
+
+<p>\(\textbf{Step4.}\) The total regret is</p>
+
+\[R_T=N+2T\sqrt{\frac{K}{2N}\log(2k/\delta)}=O(T^{2/3}K^{1/3}(\log(2K/\delta))^{1/3})\]
+
+<p>where the last equal sign chooses \(N=T^{2/3}K^{1/3}(\log(2K/\delta))^{1/3}\).</p>
+
+<hr />
+
+<h5 id="12-epsilon-greedy-algorithm">1.2 Epsilon-greedy algorithm</h5>
+
+<p><strong>Algorithm 2: Epsilon-greedy</strong></p>
+
+<p>Let the strategy be:</p>
+
+<ul>
+  <li>
+    <p>With probability \(\epsilon\), choose the action uniformly at random;</p>
+  </li>
+  <li>
+    <p>With probability \(1-\epsilon\), select</p>
+  </li>
+</ul>
+
+\[A_t:=\text{argmax}_{a\in[K]} \widehat{Q}_t(a),\]
+
+<p>where \(\widehat{Q}_t\) is defined the same as Algorithm 1.</p>
+
+<p>It can be shown the regret bound is</p>
+
+\[\underbrace{\epsilon T}_{\text{Exploration}}+\underbrace{\sum_{t=1}^T C\sqrt{\frac{K}{\epsilon t}}}_{\text{Exploitation}}\]
+
+<p>choose \(\epsilon=T^{-1/3}K^{1/3}\) gives regret \(\tilde{O}(T^{2/3}K^{1/3})\).</p>
+<hr />
+
+<h4 id="13-upper-condifence-bound-ucb-algorithm">1.3 Upper Condifence Bound (UCB) Algorithm</h4>
+
+\[\textbf{Optimism in the face of uncertainty: UCB}\]
+
+<p><strong>Algorithm 3: UCB</strong></p>
+
+<ul>
+  <li>Play each action \(a\in[K]\) once (in total \(K\) steps);</li>
+  <li>For \(t=k+1,\ldots,T\)
+    <ul>
+      <li>
+        <p>Choose 
+  \(A_t:=\text{argmax}_a \widehat{Q}_t(a)+\sqrt{\frac{2\log(2TK/\delta)}{2N_t(a)}};\)</p>
+      </li>
+      <li>
+        <p>where \(\widehat{Q}_t(a)=\frac{1}{N_t(a)}(R_a+\sum_{i=k+1}^{t-1} \mathbf{1}[A_i=a]\cdot R_i)\), \(N_t(a)=\sum_{i=1}^{t-1}\mathbf{1}[A_i=a]\).</p>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+<p><strong>Regret analysis: non-adaptive bound</strong></p>
+
+<p>By Azuma-Hoeffding’s inequality and an union bound, w.p. \(1-\delta\),</p>
+
+\[|R_a-\mu_a+\sum_{i=k+1}^{t-1} \mathbf{1}[A_i=a]\cdot(R_i-\mu_a)|\leq \sqrt{2 N_t(a)\log(KT/\delta)},\quad \forall a\in[K],t\in[k+1,T]\]
+
+<p>Note the above is equivalent to</p>
+
+\[\begin{aligned}
+&amp;\sup_{t,a}\frac{1}{\sqrt{N_t(a)}}|R_a-\mu_a+\sum_{i=k+1}^{t-1} \mathbf{1}[A_i=a]\cdot(R_i-\mu_a)|\leq \sqrt{2 \log(KT/\delta)}\\
+\Leftrightarrow &amp; \sup_{t,a} \sqrt{N_t(a)}\cdot |\widehat{Q}_t(a)-\mu_a|\leq \sqrt{2\log(KT/\delta)}\\
+ \Leftrightarrow &amp;  |\widehat{Q}_t(a)-\mu_a|\leq \sqrt{\frac{2\log(KT/\delta)}{N_t(a)}},\quad \forall a\in[K],t\\
+\end{aligned}\]
+
+<p>Recall \(\bar{Q}_t(a)=\widehat{Q}_t(a)+\sqrt{\frac{2\log(2KT/\delta)}{N_t(a)}}\), then at each time \(t\),</p>
+
+\[\begin{aligned}
+&amp;\mu_{a^\star}-\mu_{A_t}\\
+=&amp;\mu_{a^\star}-\bar{Q}_t(a^\star)+\bar{Q}_t(a^\star)-\bar{Q}_t(A_t)+\bar{Q}_t(A_t)-\mu(A_t)\\
+\leq&amp; 0+0+2 \sqrt{\frac{2\log(KT/\delta)}{N_t(a)}}
+\end{aligned}\]
+
+<p>which uses optimism and the UCB rule. Then the total regret is bounded by</p>
+
+\[\begin{aligned}
+R_T=&amp;R_{1:K}+R_{K+1:T}\\
+\leq&amp; K+\sum_{t=K+1}^T (\mu_{a^\star}-\mu_{A_t})\\
+\leq &amp; K+ \sum_{t=K+1}^T 2 \sqrt{\frac{2\log(KT/\delta)}{N_t(a)}}\\
+\leq &amp; K+2 \sqrt{2\log(KT/\delta)}\sum_{a=1}^K\sum_{i=1}^{N_T(a)}\frac{1}{\sqrt{i}}\\
+\leq &amp; K +4 \sqrt{2\log(KT/\delta)}\sum_{a=1}^K \sqrt{N_T(a)} \quad \text{eqn} (\star)\\
+\leq &amp; K +4 \sqrt{2\log(KT/\delta)}\sqrt{K\cdot \sum_{a=1}^K N_T(a)}\\
+= &amp; K +4 \sqrt{2KT\log(KT/\delta)}\\
+\end{aligned}\]
+
+<p><strong>Regret analysis: gap-dependent expression</strong></p>
+
+<p>Define the gap \(\Delta_a:= \mu_{a^\star}-\mu_a\). By the concentration result and the UCB rule, we know</p>
+
+\[\begin{aligned}
+\bar{Q}_t(a)\leq&amp; \mu_a+\sqrt{\frac{2\log(2TK/\delta)}{N_t(a)}}\\
+=&amp;\mu_{a^\star}-\Delta_a+\sqrt{\frac{2\log(2TK/\delta)}{N_t(a)}}\\
+\Leftrightarrow&amp; \mu_{a^\star}-\bar{Q}_t(a)\geq \Delta_a-\sqrt{\frac{2\log(2TK/\delta)}{N_t(a)}}
+\end{aligned}\]
+
+<p>Note when \(\mu_{a^\star}-\bar{Q}_t(a)\geq 0\), then arm \(a\) will never be played again (since \(\bar{Q}_t(a^\star)\) always upper bounds \(\bar{Q}_t(a)\)) and \(N_t(a)\) will no longer change! Therefore from above we always have</p>
+
+\[0\geq \Delta_a-\sqrt{\frac{2\log(2TK/\delta)}{N_T(a)}}\Leftrightarrow N_T(a)\leq \frac{2\log(2TK/\delta)}{\Delta_a^2}\]
+
+<p>The former non-adaptive bound can be replaced by</p>
+
+\[R_T=\sum_{a=1}^K \Delta_a+{O}(\sum_{a \neq a^\star} \frac{1}{\Delta_a}\log(KT/\delta))\]
+
+<hr />
+
+<p>\(\textbf{Short note:}\) for the non-stochastic bandit setting (<em>e.g.</em> adversarial setting), there are algorithms (<em>e.g.</em> <strong>EXP3</strong>) that achieves the same regret. See <a href="https://cseweb.ucsd.edu/~yfreund/papers/bandits.pdf" target="\_blank">Peter Auer et al. (2001)</a>.</p>
+
+<hr />
+
+<h3 id="2-linear-bandits">2. Linear Bandits</h3>
+
+<p><strong>The problem setup</strong></p>
+
+<ul>
+  <li>Action space is a compact set \(x_t\in \mathcal{D}\subset R^d\);</li>
+  <li>Reward is linear with i.i.d mean-zero \(\sigma^2\)-subguassian noise:</li>
+</ul>
+
+<p>\(r_t=\mu^\star\cdot x_t+\eta_t,\quad \mathbb{E}[r_t|x_t=x]=\mu^\star\cdot x\in[-1,1];\)</p>
+<ul>
+  <li>Agent chooses a sequence of actions \(x_1,\ldots,x_T\);</li>
+  <li>Let \(x^\star\in \text{argmax}_{x\in\mathcal{D}}\mu^\star\cdot x\), then the regret is defined as</li>
+</ul>
+
+\[R_T=T\cdot \langle \mu^\star,x^\star \rangle-\sum_{t=1}^T \langle \mu^\star,x_t \rangle.\]
+
+<hr />
+
+<h4 id="21-linucb-algorithm">2.1. LinUCB Algorithm</h4>
+
+<p>For each time \(t\), with collected data \((x_i,r_i)\) for all \(i=1,\ldots,t-1\)</p>
+
+<ul>
+  <li>Compute the estimated \(\widehat{\mu}_t\) through ridge regression:</li>
+</ul>
+
+\[\widehat{\mu}_t:=\text{argmin}_\theta \sum_{i=1}^{t-1}(x_i^\top \theta-r_i)^2+\lambda ||\theta||^2_2\]
+
+<p>Define \(\Sigma_t=\lambda I +\sum_{i=1}^{t-1}x_i x_i^\top\), then
+\(\widehat{\mu}_t:=\Sigma^{-1}_t\sum_{i=1}^{t-1}r_i x_i\)</p>
+
+<ul>
+  <li>Construct high probability confidence ellipsoid of the parameter</li>
+</ul>
+
+\[\text{Ball}_t=\{\mu| (\mu-\widehat{\mu}_t)^\top \Sigma_t(\mu-\widehat{\mu}_t)\leq \beta_t\}\]
+
+<ul>
+  <li>Choose actions that maximize the UCB</li>
+</ul>
+
+\[x_t=\text{argmax}_{x\in\mathcal{D}}\max_{\mu\in\text{Ball}_t}\langle x,\mu\rangle\]
+
+<p>\(\textbf{Note:}\) the computation of LinUCB could be NP-hard though.</p>
+<hr />
+
+<p><strong>Theorem (Upper bound of LinUCB)</strong> Choose \(\beta_t=\tilde{O}(\sigma^2 \cdot d)\), suppose \(\lVert\mu^\star\rVert\leq W\), \(\lVert x\rVert\leq B\) for all \(x\in\mathcal{D}\). Then set \(\lambda=\sigma^2/W^2\), w.p. \(1-\delta\),</p>
+
+\[R_T\leq C\sigma \sqrt{T}(d\log(1+\frac{TB^2W^2}{d\sigma^2})+\log(4/\delta)).\]
+
+<hr />
+
+<h4 id="22-analysis-of-the-linucb-algorithm">2.2 Analysis of the LinUCB algorithm</h4>
+
+<p>The analysis is based on several lemmas.</p>
+
+<ul>
+  <li><strong>Lemma 1: “Width” of confidence ball</strong> Let \(x\in\mathcal{D}\). If \(\mu\in\text{Ball}_t\), then</li>
+</ul>
+
+\[|(\mu-\widehat{\mu}_t)^\top x|\leq\sqrt{\beta_tx^\top \Sigma^{-1}_t x}\]
+
+<ul>
+  <li><strong>Lemma 2: Instaneous regret is bounded</strong> Fix \(t\leq T\) and define \(w_t:=\sqrt{x_t^\top \Sigma^{-1}_t x_t}\). If \(\mu^\star\in\text{Ball}_t\), then</li>
+</ul>
+
+\[\text{regret}_t\leq 2\min(\sqrt{\beta_t}w_t,1)\leq 2\sqrt{\beta_T}\min(w_t,1).\]
+
+<ul>
+  <li><strong>Lemma 3: “Geometric potential” argument</strong> We have:</li>
+</ul>
+
+\[\text{det}\Sigma_T=\text{det}\Sigma_0 \cdot \prod_{t=0}^{T-1}(1+w_t^2).\]
+
+<p>\(\textbf{Note:}\) The proof of this lemma is intersting, see Lemma 5.9 of <a href="https://rltheorybook.github.io/rltheorybook_AJKS.pdf" target="\_blank">AJKS</a>.</p>
+
+<ul>
+  <li><strong>Lemma 4</strong> For any sequence \(x_0,\ldots,x_{T-1}\) such that for \(t&lt;T\), \(\lVert x_t \rVert_2\leq B\), then</li>
+</ul>
+
+\[\log(\text{det}\Sigma_{T-1}/\text{det}\Sigma_0)=\log \text{det}(I+\frac{1}{\lambda}\sum_{t=0}^{T-1}x_tx_t^\top)\leq d\log(1+\frac{TB^2}{d\lambda}).\]
+
+<p>Combine Lemma 1-4, we have for LinUCB if \(\mu^\star\in\text{Ball}_t\) for all \(t\), then</p>
+
+<p>\begin{equation}\label{eqn:l2norm}
+\sum_{t=0}^{T-1} \text{regret}_{t}^{2} \leq 4 \beta_T d\log(1+\frac{TB^2}{d\lambda}) 
+\end{equation}</p>
+
+<p>Also, it can be shown for \(\delta&gt;0\), \(\mathbb{P}(\forall t,\mu^\star\in\text{Ball}_t)\geq 1-\delta\).</p>
+
+<p>Combine \eqref{eqn:l2norm} and the above we can show w.p. \(1-\delta\),</p>
+
+\[R_{T}=\sum_{t=0}^{T-1} \text {regret}_{t} \leq \sqrt{T \sum_{t=0}^{T-1} \text { regret }_{t}^{2}} \leq \sqrt{4 T \beta_{T} d \log \left(1+\frac{T B^{2}}{d \lambda}\right)}\]
+
+<p>which finishes the proof.</p>
+
+<hr />
+
+<p>The content of this post mainly comes from <a href="https://tor-lattimore.com/downloads/book/book.pdf" target="\_blank">the Bandit Algorithms Book</a> and <a href="https://rltheorybook.github.io/rltheorybook_AJKS.pdf" target="\_blank">AJKS</a>.</p>]]></content><author><name></name></author><summary type="html"><![CDATA[This post summarizes the regret analysis of the Exploration-First Algorithm, the Upper Confidence Bound (UCB) Algorithm for the multi-armed bandits (MAB) problems and the LinUCB Algorithm for linear Bandits.]]></summary></entry><entry><title type="html">A Brief Introduction to Influence Funtion Technique</title><link href="https://mingyin0312.github.io/blog/2021/influence-function/" rel="alternate" type="text/html" title="A Brief Introduction to Influence Funtion Technique" /><published>2021-03-15T00:00:00+00:00</published><updated>2021-03-15T00:00:00+00:00</updated><id>https://mingyin0312.github.io/blog/2021/influence-function</id><content type="html" xml:base="https://mingyin0312.github.io/blog/2021/influence-function/"><![CDATA[<p>This post explains how to calculate efficiency bound through influence function technique.</p>
+
+<p>A statistic \(\phi(P) \in\mathbb{R}\), which is a function of the distribution of the vector \(X\), \(P(X)\). Examples include \(\mathbb{E}[X], \text{Var}(X)\). How to define the differentiability of \(\phi\) at \(P^0\)? Let’s mimic the first order Taylor Expansion for \(\phi\) in the functional form:</p>
+
+\[\phi(P)\approx \phi(P^0)+D\phi(P-P^0)\]
+
+<p>How to define it properly?</p>
+
+<hr />
+
+<h3 id="1-frechet-derivative-at-p0">1. Frechet derivative at \(P^0\)</h3>
+
+<p>Frechet derivative at \(P^0\) is defined as:</p>
+
+\[\lim _{P \rightarrow P^{0}} \frac{||\left(\phi(P)-\phi\left(P^{0}\right)\right)-D \phi\left(P-P^{0}\right)||_U}{\left\|P-P^{0}\right\|_V}=0\]
+
+<p>where \(D\phi\) is a continuous linear functional with respect to some norm \(\|P\|\).</p>
+
+<p><strong>Example: \(L^2\) norm on the space of densities.</strong></p>
+
+<p>\begin{equation}\label{eqn:l2norm}
+||P||=\sqrt{\int\left(d P / d P^{0}\right)^{2} d P^{0}}
+\end{equation}</p>
+
+<p>To handle the functional operation, we need the following representation theorem.</p>
+
+<hr />
+
+<h3 id="2-riesz-representation-theorem">2. Riesz representation theorem</h3>
+
+<p>Let \(\mathscr{H}\) be any Hilbert space with inner product \(\langle\cdot, \cdot\rangle\) and the induced norm.Then for any continuous linear functional \(\psi: \mathscr{H} \rightarrow \mathbb{R}\), there is an element \(x \in \mathscr{H}\) such that \(\forall y \in \mathscr{H}\),</p>
+
+\[\psi(y)=\langle x, y\rangle\]
+
+<hr />
+
+<h3 id="3-influence-function">3. Influence function</h3>
+
+<p>Take  \(\mathscr{H}\) to be the space of all measurable functions of \(X\) which have mean zero and finite variance under \(P^0\). The inner product is defined as \(\langle y, z\rangle=E^{0}[y(X) \cdot z(X)]=\operatorname{Cov}(y, z)\).</p>
+
+<p>Recall form \eqref{eqn:l2norm} the the norm of distribution is defined in the relative density sense, therefor there exists another linear functional \(D^\prime \phi\) such that</p>
+
+\[\begin{aligned}
+D\phi(P-P^0)&amp;=D^\prime\phi(\frac{dP}{dP^0}-\frac{dP}{dP^0})=D^\prime\phi(\frac{dP}{dP^0}-1)=\mathbb{E}^0[IF(X)\cdot\frac{dP}{dP^0}(X)]\\
+&amp;=\int IF(X)\cdot\frac{dP}{dP^0}(X)dP^0(X)\\
+&amp;=\int IF(X)\cdot dP(X)=\mathbb{E}[IF(X)]\\
+\end{aligned}\]
+
+<p>Hence we have</p>
+
+<p>\begin{equation}\label{eqn:IF}
+\phi(P) \approx \phi\left(P^{0}\right)+\mathbb{E}[I F(X)].
+\end{equation}</p>
+
+<hr />
+
+<h3 id="4-intuitive-derivation-of-influence-function">4. Intuitive derivation of influence function</h3>
+
+<p>Suppose we construct the plug-in estimator \(\hat{\phi}=\phi(P_n)\), where \(P_n\) is the empirical distribution</p>
+
+\[P_n=\frac{1}{n}\sum_{i=1}^n\delta_{X_i},\]
+
+<p>then use the <strong>linear property</strong> of the functional, we have</p>
+
+\[\begin{aligned}
+\widehat{\phi} &amp;\approx \phi\left(P^{0}\right)+D \phi\left(P_{n}-P^{0}\right)=\phi\left(P^{0}\right)+\frac{1}{n} \sum_{i=1}^n D \phi\left(\delta_{X_{i}}-P^{0}\right)\\
+&amp;=\phi(P^0)+E_n[D\phi(\delta_{X_i}-P^0)].
+\end{aligned}\]
+
+<p>where \(E_n\) is the sample average. This suggests</p>
+
+\[IF(X)=D\phi(\delta_X-P^0).\]
+
+<hr />
+
+<h3 id="5-how-to-actually-calculate-influence-function">5. How to actually calculate influence function?</h3>
+
+<p>Using directional derivatives: consider families of distributions indexed by a scalar \(\theta\) with \(P(X;\theta)\). Then from \eqref{eqn:IF} we directly have</p>
+
+\[\frac{\partial \phi}{\partial \theta}=\frac{\partial}{\partial\theta}\mathbb{E}[IF(X)]=\int IF(X)\frac{\partial}{\partial\theta}dP(X;\theta).\]
+
+<p>and normalize it to so that \(IF\) has zero mean.</p>
+
+<p><strong>Example.</strong></p>
+
+<ul>
+    <li> 
+        $$
+\phi(P)=\operatorname{Var}(X)=\int X^{2} d P-\left(\int X d P\right)^{2}
+$$
+Then 
+$$
+\begin{aligned}
+\frac{\partial \phi}{\partial \theta}&amp;=\int X^{2} \frac{\partial}{\partial \theta} d P-2\left(\int X d P\right) \int X \frac{\partial}{\partial \theta} dP\\
+&amp;=\int\left(X^{2}-2 E[X] \cdot X\right) \frac{\partial}{\partial \theta} dP
+\end{aligned}
+$$
+Normalize it to get 
+$$
+I F(X)=X^{2}-2 E[X] \cdot X-\operatorname{Var}(X)+E[X]^{2}!
+$$
+   </li>
+
+</ul>
+
+<hr />
+
+<h3 id="6-why-should-we-care-about-influence-function">6. Why should we care about influence function?</h3>
+
+<p>Most importantly, it implies the asymptotic efficiency bound for estimating \(\phi\) is</p>
+
+\[\lim_{n\rightarrow\infty} n\cdot \operatorname{Var}(\hat{\phi})\geq \operatorname{Var}(IF(X)),\]
+
+<p>which provides a powerful alternative when Fisher information style argument is not applicable!</p>
+
+<p>For details see <a href="https://books.google.com/books?hl=en&amp;lr=&amp;id=UEuQEM5RjWgC&amp;oi=fnd&amp;pg=PP19&amp;dq=Asymptotic+statistics.+&amp;ots=mpOFUCd_KB&amp;sig=j0h2_Tt9cXqgycuXYKTLRFwRjNo#v=onepage&amp;q=Asymptotic%20statistics.&amp;f=false" target="\_blank">Asymptotic statistics</a> and <a href="https://books.google.com/books?hl=en&amp;lr=&amp;id=xqZFi2EMB40C&amp;oi=fnd&amp;pg=PR8&amp;dq=Semiparametric+theory+and+missing+data&amp;ots=NG7_acMaHA&amp;sig=leMg2Of1nq4k-VUw2hTrmnv3eMA#v=onepage&amp;q=Semiparametric%20theory%20and%20missing%20data&amp;f=false" target="\_blank">Semiparametric theory and missing data</a>.</p>
+
+<hr />
+
+<h3 id="7-an-application">7. An application</h3>
+
+<p>In Offline Policy Evaluation, the asympototic linear Cramer-Rao lower bound is obtained using Information Function technique for the first time! See Theorem 4.5 of paper <a href="https://arxiv.org/pdf/2102.03607.pdf" target="\_blank">Bootstrapping Statistical Inference for Off-Policy Evaluation</a> for more details.</p>
+
+<hr />
+
+<p>The content of this post mainly comes from <a href="https://scholar.harvard.edu/files/kasy/files/ifhandout.pdf" target="\_blank">this note</a> of Maximilian Kasy.</p>]]></content><author><name></name></author><summary type="html"><![CDATA[Influence function technique is powerful in that it provides a way to calculate efficiency bound for the semiparameteric estimation problems.]]></summary></entry><entry><title type="html">Variance Reduction Technique for Optimal Offline RL</title><link href="https://mingyin0312.github.io/blog/2021/doubleVR/" rel="alternate" type="text/html" title="Variance Reduction Technique for Optimal Offline RL" /><published>2021-03-04T00:00:00+00:00</published><updated>2021-03-04T00:00:00+00:00</updated><id>https://mingyin0312.github.io/blog/2021/doubleVR</id><content type="html" xml:base="https://mingyin0312.github.io/blog/2021/doubleVR/"><![CDATA[<p>The discussion is based on <d-cite key="yin2021nearoptimal"></d-cite>.</p>
+
+<h2 id="brief-background-of-offline-learning">Brief background of Offline Learning</h2>
+
+<p>Historical data $\mathcal{D}=\left\lbrace (s_t^{(i)},a_t^{(i)},r_t^{(i)})\right\rbrace_{i\in[n]}^{t\in[H]} $ was obtained by logging policy $\mu$ and we can only use $\mathcal{D}$ to estimate the value of target policy $\pi$, <em>i.e.</em> $v^\pi$. Suppose we only assume knowledge about $\pi$ and $r_t^{(i)} = r_t(s_t^{(i)},a_t^{(i)})$. The goal of offline learning task is to find an <em>$\epsilon$-optimal policy</em> $\pi_\text{out}$, such that</p>
+
+\[\left\lVert V_1^{\pi^\star}-V_1^{\pi_\text{out}}\right\rVert_\infty&lt;\epsilon.\]
+
+<p>In particular, <d-cite key="yin2021near"></d-cite> obtains the $\tilde{O}(H^3/d_m\epsilon^2)$ complexity and <d-cite key="yin2021nearoptimal"></d-cite> further tightens the result to $\tilde{O}(H^2/d_m\epsilon^2)$ via a <em>Variance Reducetion</em> based algorithm.</p>
+
+<h2 id="a-brief-review-of-variance-reduction-for-rl">A brief review of Variance Reduction for RL</h2>
+
+<p>In the case of policy optimization, VR is an algorithm that approximately iterating the Bellman optimality equation, using an inner loop that performs an approximate value (or Q-value) iteration using fresh interactive data to estimate $V^\star$, and an outer loop that performs multiple steps of such iterations to refine the estimates. Concretely, to obtain an reliable $Q_t(s,a)$ for some step $t\in[H]$, by the Bellman equation $Q_t(s,a)=r(s,a)+P_t^\top(\cdot \mid s,a)V_{t+1}$, we need to estimate $P_t^\top(\cdot\mid s,a)$ with sufficient accuracy. VR handles this by decomposing:</p>
+
+<p>\begin{equation}\label{eq:VR_decomposition}
+    \quad P_t^\top(\cdot|s,a)V_{t+1} 
+     =P_t^\top(\cdot|s,a)(V_{t+1}-V_{t+1}^{\text{in}})+P_t^\top(\cdot|s,a)V_{t+1}^{\text{in}},
+\end{equation}</p>
+
+<p>where $V_{t+1}^{\text{in}}$ is a <em>reference</em> value function obtained from previous calculation and $P_t^\top(\cdot\mid s,a)(V_{t+1}-V_{t+1}^{\text{in}})$, $P_t^\top(\cdot\mid s,a)V_{t+1}^{\text{in}}$ are estimated separately at different stages. This technique can help in reducing the <em>effective variance</em> along the learning process.</p>
+
+<hr />
+
+<h2 id="hightlights-of-our-results">Hightlights of our results</h2>
+
+<p>In particular, we design the <em>Off-Policy Double Variance Reduction</em> (<strong>OPDVR</strong>) algorithm to achieve the following:</p>
+
+<ul>
+    <li>For finite horizon non-stationary transition (time-variant) setting, OPDVR outputs a $\epsilon$-optimal policy with complexity $\tilde{O}(H^3/d_m\epsilon^2)$;
+   </li>
+    <li>
+    For finite horizon stationary transition (time-invariant) setting, OPDVR outputs a $\epsilon$-optimal policy with complexity $\tilde{O}(H^2/d_m\epsilon^2)$;
+    </li>
+    <li>
+    	For infinite horizon discounted setting, OPDVR outputs a $\epsilon$-optimal policy with complexity $\tilde{O}((1-\gamma)^{-3}/d_m\epsilon^2)$;
+	</li>
+</ul>
+<p>All of above have minimax rate in their respective settings! If you are interested, please check <d-cite key="yin2021nearoptimal"></d-cite> for a reference.</p>
+
+<hr />
+
+<h2 id="miscellaneous">Miscellaneous</h2>
+
+<p>My nice collaborator also shared this on twitter:</p>
+<div class="jekyll-twitter-plugin"><blockquote class="twitter-tweet" data-width="500"><p lang="en" dir="ltr">New preprint on offline RL:<a href="https://t.co/2vv2KLA1TF">https://t.co/2vv2KLA1TF</a><br /><br />* A variance reduction algorithm for offline RL<br />* Optimal horizon dependence: O(H^2/d_m) sample complexity on time-homogeneous MDPs<br /><br />Joint w/ Ming Yin (<a href="https://twitter.com/MingYin_0312?ref_src=twsrc%5Etfw">@MingYin_0312</a>) and Yu-Xiang Wang</p>&mdash; Yu Bai (@yubai01) <a href="https://twitter.com/yubai01/status/1358887058274570241?ref_src=twsrc%5Etfw">February 8, 2021</a></blockquote>
+<script async="" src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+</div>]]></content><author><name>Ming Yin</name></author><summary type="html"><![CDATA[A algorithm that achieves Minimax rate for tabular RL]]></summary></entry><entry><title type="html">Why can’t we surpass the speed of light? Einstein tells you</title><link href="https://mingyin0312.github.io/blog/2021/massive-energy/" rel="alternate" type="text/html" title="Why can’t we surpass the speed of light? Einstein tells you" /><published>2021-03-03T00:00:00+00:00</published><updated>2021-03-03T00:00:00+00:00</updated><id>https://mingyin0312.github.io/blog/2021/massive-energy</id><content type="html" xml:base="https://mingyin0312.github.io/blog/2021/massive-energy/"><![CDATA[<p>Why can’t we travel faster than the speed of light? Einstein explained this pheonmenon through his famous equation</p>
+
+<p>\begin{equation}\label{eqn:mass}
+m=\frac{m_0}{\sqrt{1-(\frac{v}{c})^2}},
+\end{equation}</p>
+
+<p>which is the last of his four celebrated works in 1905 (Albert Einstein’s Year of Miracles) titled <a href="https://einsteinpapers.press.princeton.edu/vol2-trans/186">Does the inertia of a body depend on its energy content?</a>. This paper entails arguably the most famous formula so far: <a href="https://en.wikipedia.org/wiki/Mass–energy_equivalence">Mass-Energy Equivalence</a></p>
+
+\[E=mc^2.\]
+
+<p>From \eqref{eqn:mass}, when the velocity of a particle approaches \(c\), the relative mass \(m\) will goes to \(\infty\). Therefore any particle with \(m_0&gt;0\) can never exceed the speed of light.</p>
+
+<p>For the rest of the post, we use high school physics to proof these famous results!</p>
+
+<hr />
+
+<h3 id="1-review-from-high-school-physics-materials">1. Review from high school physics materials</h3>
+<ul>
+    <li>Momentum Conservation Principle (动量守恒定律): For a system (with two objectives) has 0 momentum, it always holds:
+    	\begin{equation}\label{eqn:mon}
+  		0=P_1-P_2=m_1v_1-m_2v_2,
+  		\end{equation}
+    	multiply both sides by time t, we further have 
+    	\begin{equation}\label{eqn:mon_s}
+    	0=m_1S_1-m_2S_2.
+    	\end{equation}
+   </li>
+    <li>
+    Electromagnetic waves: 
+    \begin{equation}\label{eqn:egw}
+    E=Pc
+    \end{equation}	
+    </li>
+    <li>
+    	Theorem of Momentum:
+    	\begin{equation}\label{eqn:tom}
+    		dW=Fdx=dE,\quad F=\frac{dP}{dt}.
+    	\end{equation}
+	</li>
+</ul>
+
+<hr />
+
+<h3 id="2-proof-of-emc2">2. Proof of \(E=mc^2\)</h3>
+
+<p><strong>Einstein’s Thought Experiment.</strong> Imagine there is a box with length \(L\), a photon with energy \(E\) goes from one side to the other side. Consider the system of photon and the box.</p>
+
+<p>By \eqref{eqn:egw},</p>
+
+<p>\begin{equation}
+P_1=\frac{E}{c}
+\end{equation}</p>
+
+<p>then by \eqref{eqn:mon},</p>
+
+<p>\begin{equation}
+P_2=P_1=\frac{E}{c}.
+\end{equation}</p>
+
+<p>Then by the definition of momentum \eqref{eqn:mon}</p>
+
+<p>\begin{equation}
+v_{\text{box}}=\frac{P_2}{m_2}=\frac{E}{m_2c}.
+\end{equation}</p>
+
+<p>On the other hand, for photon \(s_1\approx L\), then for box we have</p>
+
+<p>\begin{equation}
+s_2=v_{\text{box}}\cdot t=\frac{E}{m_2c}\cdot t=\frac{E}{m_2c}\cdot \frac{L}{c}
+\end{equation}</p>
+
+<p>Let the mass of photon be \(m\), then by Momentum Conservation Principle,</p>
+
+<p>\begin{equation}
+mL-m_2\cdot \frac{EL}{m_2c^2}=0
+\end{equation}</p>
+
+<p>Which gives</p>
+
+\[E=mc^2.\]
+
+<p>This can be generalize to not only photon but all particles!</p>
+
+<p>Quite easy! Right?</p>
+
+<hr />
+
+<h3 id="proof-of-mm_0sqrt1-fracvc2">Proof of \(m={m_0}/{\sqrt{1-(\frac{v}{c})^2}}\)</h3>
+
+<p>Recall \(E=mc^2\), \(P=mv\), hence</p>
+
+<p>\begin{equation}\label{eqn:inter}
+\frac{E}{P}=\frac{c^2}{v}\Rightarrow E=\frac{Pc^2}{v}.
+\end{equation}</p>
+
+<p>Now by \eqref{eqn:tom},</p>
+
+<p>\begin{equation}
+	dE=Fdx=\frac{dP}{dt}dx=v\cdot dP,
+\end{equation}
+multiply above by \eqref{eqn:inter}, then</p>
+
+\[EdE=\frac{Pc^2}{v}\cdot v\cdot dP=Pc^2\cdot dP.\]
+
+<p>Take integral, we obtian</p>
+
+\[E^2=c^2P^2+const.\]
+
+<p>When \(P=0\), \(E=E_0=m_0c^2\). Therefore we already derived</p>
+
+<p>\begin{equation}\label{eqn:final}
+E^2=c^2P^2+m_0^2c^4
+\end{equation}</p>
+
+<p>In particular, for photon, by \eqref{eqn:egw} \(E=Pc\), which implies the invariant mass (光子的静止质量) \(m_0=0\)! This simly says: <strong>For any pariticle that has positive invariant mass, it cannot achieve the speed of light!</strong></p>
+
+<p>Finally, use \eqref{eqn:inter}, we have \(P=\frac{Ev}{c^2}\), plug in \eqref{eqn:final} to obtain</p>
+
+\[E^2=E^2\frac{v^2}{c^2}+m_0^2c^4\Rightarrow E=\frac{m_0c^2}{\sqrt{1-\frac{v^2}{c^2}}}.\]
+
+<p>Again, use \(E=mc^2\), we obtain</p>
+
+\[m=\frac{m_0}{\sqrt{1-(\frac{v}{c})^2}}.\]
+
+<p>That’s it! Now you know why \(c\) is the fastest speed we can get!</p>]]></content><author><name></name></author><summary type="html"><![CDATA[Only senior high school knowledge is needed to understand this pheonmenon!]]></summary></entry><entry><title type="html">TMIS (Plug-in) estimator is statistically efficient for Tabular OPE</title><link href="https://mingyin0312.github.io/blog/2021/TMIS/" rel="alternate" type="text/html" title="TMIS (Plug-in) estimator is statistically efficient for Tabular OPE" /><published>2021-02-28T00:00:00+00:00</published><updated>2021-02-28T00:00:00+00:00</updated><id>https://mingyin0312.github.io/blog/2021/TMIS</id><content type="html" xml:base="https://mingyin0312.github.io/blog/2021/TMIS/"><![CDATA[<h2 id="brief-background-of-ope">Brief background of OPE</h2>
+
+<p>Historical data \(\mathcal{D}=\left\lbrace (s_t^{(i)},a_t^{(i)},r_t^{(i)})\right\rbrace_{i\in[n]}^{t\in[H]}\) was obtained by logging policy \(\mu\) and we can only use \(\mathcal{D}\) to estimate the value of target policy \(\pi\), <em>i.e.</em> \(v^\pi\). Suppose we only assume knowledge about \(\pi\) and <em>do not observe</em> \(r_t(s_t,a_t)\) for any actions other than the noisy immediate reward \(r_t^{(i)}\) after observing \(s_t^{(i)},a_t^{(i)}\). The goal is to find an estimator to minimize the mean-square error (MSE):</p>
+
+\[MSE(\pi,\mu,M)=\mathbb{E}_\mu[(\hat{v}^\pi-v^\pi)^2]\]
+
+<p>It is known from Theorem 3 of <d-cite key="jiang2016doubly"></d-cite> that for discrete DAG MDPs, the variance of any unbiased estimator is lower bounded by<d-footnote>The randomness is taken over $s_t,a_t,r_t$ for expectation.</d-footnote></p>
+
+\[\sum_{t=0}^{H}\mathbb{E}_\mu\left[ \frac{d^\pi(s_t,a_t)^2}{d^\mu(s_t,a_t)^2}\mathrm{Var}\Big[V_{t+1}^\pi(s_{t+1})+r_t\Big| s_{t}, a_t\Big]\right].\]
+
+<hr />
+
+<h2 id="tabular-mis-estimator-is-statistically-efficient">Tabular MIS estimator is statistically efficient</h2>
+
+<p>Follow (Yin &amp; Wang, 2020) <d-cite key="yin2020asymptotically"></d-cite>, Tabular MIS $\hat{v}^\pi_\text{TMIS}$ estimats</p>
+
+\[\widehat{P}_{t+1}(s_{t+1}|s_{t},a_{t})=\frac{\sum_{i=1}^n\mathbf{1}[(s^{(i)}_{t+1},a^{(i)}_t,s^{(i)}_t)=(s_{t+1},s_{t},a_{t})]}{n_{s_{t},a_{t}}};
+\widehat{r}_t(s_t,a_t)=\frac{\sum_{i=1}^n r_t^{(i)}\mathbf{1}[(s^{(i)}_t,a^{(i)}_t)=(s_t,a_t)]}{n_{s_t,a_t}},\]
+
+<p>which results in (Theorem 3.1. in  <d-cite key="yin2020asymptotically"></d-cite>)</p>
+
+\[\mathbb{E}[ (\hat{v}_{\mathrm{TMIS}}^\pi -  v^\pi)^2]\leq \frac{1}{n}\sum_{t=0}^{H}\mathbb{E}_\mu\left[ \frac{d^\pi(s_t,a_t)^2}{d^\mu(s_t,a_t)^2}\mathrm{Var}\Big[V_{t+1}^\pi(s_{t+1})+r_t\Big| s_{t}, a_t\Big]\right]+O(\cdot),\]
+
+<p>where $O(\cdot)$ is a higher order term. This further implies</p>
+
+\[\lim_{n\rightarrow\infty} n\cdot \mathbb{E}[ (\hat{v}_{\mathrm{TMIS}}^\pi -  v^\pi)^2]=\sum_{t=0}^{H}\mathbb{E}_\mu\left[ \frac{d^\pi(s_t,a_t)^2}{d^\mu(s_t,a_t)^2}\mathrm{Var}\Big[V_{t+1}^\pi(s_{t+1})+r_t\Big| s_{t}, a_t\Big]\right].\]
+
+<p>Therefore TMIS is statistically efficient as it matches the lower bound given by <d-cite key="jiang2016doubly"></d-cite>.</p>
+
+<hr />
+
+<h2 id="monte-carlo-on-policy-estimator-is-statistically-inefficient">Monte Carlo on-policy estimator is statistically inefficient!</h2>
+
+<p>To understand this, note on-policy estimator uses</p>
+
+\[\hat{v}^\pi_\textbf{on}=\frac{1}{n}\sum_{t=0}^H\sum_{i=1}^n r_t^{(i)},\]
+
+<p>and the variance of $
+\hat{v}^\pi_\textbf{on}$ becomes (by Lemma 3.4 of <d-cite key="yin2020asymptotically"></d-cite>)</p>
+
+\[\frac{1}{n}\mathrm{Var}\left[\sum_{t=0}^H r_t\right]= \frac{1}{n}\sum_{t=1}^H \Big(\mathbb{E}_\pi\left[ \mathrm{Var}\left[r_t+V^\pi_{t+1}(s_{t+1}) \middle|s_t,a_t\right] \right]
++  \mathbb{E}_\pi\left[ \mathrm{Var}\left[  \mathbb{E}_\pi[r_t+V^\pi_{t+1}(s_{t+1}) | s_t, a_t]  \middle|s_t\right] \right]\Big).\]
+
+<p>Hence the asymptotic variance of $
+\hat{v}^\pi_\textbf{on}$ has</p>
+
+\[\lim_{n\rightarrow\infty} n\cdot \mathrm{Var}(\hat{v}^\pi_\textbf{on})= \sum_{t=1}^H \Big(\mathbb{E}_\pi\left[ \mathrm{Var}\left[r_t+V^\pi_{t+1}(s_{t+1}) \middle|s_t,a_t\right] \right]
++  \mathbb{E}_\pi\left[ \mathrm{Var}\left[  \mathbb{E}_\pi[r_t+V^\pi_{t+1}(s_{t+1}) | s_t, a_t]  \middle|s_t\right] \right]\Big).\]
+
+<p>which is greater than the on-policy ($\pi=\mu$) lower bound</p>
+
+\[\sum_{t=0}^{H}\mathbb{E}_\pi\left[ \mathrm{Var}\Big[V_{t+1}^\pi(s_{t+1})+r_t\Big| s_{t}, a_t\Big]\right]!\]]]></content><author><name>Ming Yin</name></author><summary type="html"><![CDATA[Surprisingly, Monte Carlo on-policy estimator is actually statistically inefficient.]]></summary></entry></feed>

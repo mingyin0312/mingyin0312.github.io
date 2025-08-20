@@ -2,24 +2,23 @@
 <html lang="en">
 
   <!-- Head -->
-  <head>    <!-- Metadata, OpenGraph and Schema.org -->
+  <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">    <!-- Metadata, OpenGraph and Schema.org -->
     
 
     <!-- Standard metadata -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>
-        Blog | Ming  Yin</title>
-    <meta name="author" content="Ming  Yin" />
-    <meta name="description" content="Personal page for Ming Yin
-" />
-    <meta name="keywords" content="jekyll, jekyll-theme, academic-website, portfolio-website" />
+    <title>A Brief Introduction to Influence Funtion Technique | Ming  Yin</title>
+    <meta name="author" content="Ming  Yin">
+    <meta name="description" content="Influence function technique is powerful in that it provides a way to calculate efficiency bound for the semiparameteric estimation problems.">
+    <meta name="keywords" content="jekyll, jekyll-theme, academic-website, portfolio-website">
 
 
     <!-- Bootstrap & MDB -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha256-DF7Zhf293AJxJNTmh5zhoYYIMs2oXitRfBjY+9L//AY=" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mdbootstrap@4.20.0/css/mdb.min.css" integrity="sha256-jpjYvU3G3N6nrrBwXJoVEYI/0zw8htfFnhT9ljN3JJw=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mdbootstrap@4.20.0/css/mdb.min.css" integrity="sha256-jpjYvU3G3N6nrrBwXJoVEYI/0zw8htfFnhT9ljN3JJw=" crossorigin="anonymous">
 
     <!-- Fonts & Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
@@ -27,14 +26,14 @@
     <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:100,300,400,500,700|Material+Icons">
 
     <!-- Code Syntax Highlighting -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jwarby/jekyll-pygments-themes@master/github.css" media="" id="highlight_theme_light" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jwarby/jekyll-pygments-themes@master/github.css" media="" id="highlight_theme_light">
 
     <!-- Styles -->
     
-    <link rel="shortcut icon" href="/assets/img/Princeton_seal.png"/>
+    <link rel="shortcut icon" href="/assets/img/Princeton_seal.png">
     
     <link rel="stylesheet" href="/assets/css/main.css">
-    <link rel="canonical" href="https://mingyin0312.github.io/blog/">
+    <link rel="canonical" href="https://mingyin0312.github.io/blog/2021/influence-function/">
     
     <!-- Dark Mode -->
     
@@ -50,7 +49,7 @@
       <!-- Nav Bar -->
       <nav id="navbar" class="navbar navbar-light navbar-expand-sm fixed-top">
         <div class="container">
-          <a class="navbar-brand title font-weight-lighter" href="/"><span class="font-weight-bold">Ming&nbsp;</span>Yin</a>
+          <a class="navbar-brand title font-weight-lighter" href="/"><span class="font-weight-bold">Ming </span>Yin</a>
           <!-- Navbar Toggle -->
           <button class="navbar-toggler collapsed ml-auto" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="sr-only">Toggle navigation</span>
@@ -101,171 +100,149 @@
 
     <!-- Content -->
     <div class="container mt-5">
-      <div class="post">
+      <!-- _layouts/post.html -->
 
-  <div class="header-bar">
-    <h1>Ming Yin's Blog</h1>
-    <h2>A place to explain and share my ideas and thoughts</h2>
-  </div>
+<div class="post">
 
-  
+  <header class="post-header">
+    <h1 class="post-title">A Brief Introduction to Influence Funtion Technique</h1>
+    <p class="post-meta">March 15, 2021</p>
+    <p class="post-tags">
+      <a href="/blog/2021"> <i class="fas fa-calendar fa-sm"></i> 2021 </a>
 
-  <ul class="post-list">
-    
-
-    
-    
-    
-    
-
-    <li>
-      <h3>
-        
-          <a class="post-title" href="/blog/2025/grpo/">GRPO From Scratch</a>
-        
-      </h3>
-      <p>This post explains my pytorch implementation of Group Relative Policy Optimization Algorithm.</p>
-      <p class="post-meta">
-        11 min read &nbsp; &middot; &nbsp;
-        August 19, 2025
-      </p>
-      <p class="post-tags">
-        <a href="/blog/2025">
-          <i class="fas fa-calendar fa-sm"></i> 2025 </a>
-
-          
-
-          
     </p>
-    </li>
+  </header>
 
-    
+  <article class="post-content">
+    <p>This post explains how to calculate efficiency bound through influence function technique.</p>
 
-    
-    
-    
-    
+<p>A statistic \(\phi(P) \in\mathbb{R}\), which is a function of the distribution of the vector \(X\), \(P(X)\). Examples include \(\mathbb{E}[X], \text{Var}(X)\). How to define the differentiability of \(\phi\) at \(P^0\)? Let’s mimic the first order Taylor Expansion for \(\phi\) in the functional form:</p>
 
-    <li>
-      <h3>
-        
-          <a class="post-title" href="/blog/2025/dpo/">DPO From Scratch</a>
-        
-      </h3>
-      <p>This post explains my pytorch implementation of Direct Preference Optimization Algorithm.</p>
-      <p class="post-meta">
-        7 min read &nbsp; &middot; &nbsp;
-        August 18, 2025
-      </p>
-      <p class="post-tags">
-        <a href="/blog/2025">
-          <i class="fas fa-calendar fa-sm"></i> 2025 </a>
+\[\phi(P)\approx \phi(P^0)+D\phi(P-P^0)\]
 
-          
+<p>How to define it properly?</p>
 
-          
-    </p>
-    </li>
+<hr>
 
-    
+<h3 id="1-frechet-derivative-at-p0">1. Frechet derivative at \(P^0\)</h3>
 
-    
-    
-    
-    
+<p>Frechet derivative at \(P^0\) is defined as:</p>
 
-    <li>
-      <h3>
-        
-          <a class="post-title" href="/blog/2025/rl-llm/">On Reinforcement Learning for Large Language Models</a>
-        
-      </h3>
-      <p>A personal thinking on why reinforcement learning is vital for Large Language Models. [Updated 02/21]</p>
-      <p class="post-meta">
-        5 min read &nbsp; &middot; &nbsp;
-        January 7, 2025
-      </p>
-      <p class="post-tags">
-        <a href="/blog/2025">
-          <i class="fas fa-calendar fa-sm"></i> 2025 </a>
+\[\lim _{P \rightarrow P^{0}} \frac{||\left(\phi(P)-\phi\left(P^{0}\right)\right)-D \phi\left(P-P^{0}\right)||_U}{\left\|P-P^{0}\right\|_V}=0\]
 
-          
+<p>where \(D\phi\) is a continuous linear functional with respect to some norm \(\|P\|\).</p>
 
-          
-    </p>
-    </li>
+<p><strong>Example: \(L^2\) norm on the space of densities.</strong></p>
 
-    
+<p>\begin{equation}\label{eqn:l2norm}
+||P||=\sqrt{\int\left(d P / d P^{0}\right)^{2} d P^{0}}
+\end{equation}</p>
 
-    
-    
-    
-    
+<p>To handle the functional operation, we need the following representation theorem.</p>
 
-    <li>
-      <h3>
-        
-          <a class="post-title" href="/blog/2024/flow-models/">Flow models for Generative AI</a>
-        
-      </h3>
-      <p>As an alternative to Diffusion Models, Continuous Normalizing Flow Matching is one of the most powerful paradigm for generative AI modeling.</p>
-      <p class="post-meta">
-        11 min read &nbsp; &middot; &nbsp;
-        September 1, 2024
-      </p>
-      <p class="post-tags">
-        <a href="/blog/2024">
-          <i class="fas fa-calendar fa-sm"></i> 2024 </a>
+<hr>
 
-          
+<h3 id="2-riesz-representation-theorem">2. Riesz representation theorem</h3>
 
-          
-    </p>
-    </li>
+<p>Let \(\mathscr{H}\) be any Hilbert space with inner product \(\langle\cdot, \cdot\rangle\) and the induced norm.Then for any continuous linear functional \(\psi: \mathscr{H} \rightarrow \mathbb{R}\), there is an element \(x \in \mathscr{H}\) such that \(\forall y \in \mathscr{H}\),</p>
 
-    
+\[\psi(y)=\langle x, y\rangle\]
 
-    
-    
-    
-    
+<hr>
 
-    <li>
-      <h3>
-        
-          <a class="post-title" href="/blog/2021/unified-offline-rl/">Optimal offline RL with the unified model-based framework</a>
-        
-      </h3>
-      <p>A model-based framework + singleton absorbing MDP technique achieves the optimal rate for several challenging offline tasks.</p>
-      <p class="post-meta">
-        4 min read &nbsp; &middot; &nbsp;
-        June 24, 2021
-      </p>
-      <p class="post-tags">
-        <a href="/blog/2021">
-          <i class="fas fa-calendar fa-sm"></i> 2021 </a>
+<h3 id="3-influence-function">3. Influence function</h3>
 
-          
+<p>Take  \(\mathscr{H}\) to be the space of all measurable functions of \(X\) which have mean zero and finite variance under \(P^0\). The inner product is defined as \(\langle y, z\rangle=E^{0}[y(X) \cdot z(X)]=\operatorname{Cov}(y, z)\).</p>
 
-          
-    </p>
-    </li>
+<p>Recall form \eqref{eqn:l2norm} the the norm of distribution is defined in the relative density sense, therefor there exists another linear functional \(D^\prime \phi\) such that</p>
 
-    
-  </ul>
+\[\begin{aligned}
+D\phi(P-P^0)&amp;=D^\prime\phi(\frac{dP}{dP^0}-\frac{dP}{dP^0})=D^\prime\phi(\frac{dP}{dP^0}-1)=\mathbb{E}^0[IF(X)\cdot\frac{dP}{dP^0}(X)]\\
+&amp;=\int IF(X)\cdot\frac{dP}{dP^0}(X)dP^0(X)\\
+&amp;=\int IF(X)\cdot dP(X)=\mathbb{E}[IF(X)]\\
+\end{aligned}\]
 
-  <nav aria-label="Blog page naviation">
-  <ul class="pagination pagination-lg justify-content-center">
-    <li class="page-item disabled">
-      <a class="page-link" href="" tabindex="-1" aria-disabled="">Newer</a>
-    </li><li class="page-item active"><a class="page-link" href="/blog/index.html" title="blog">1</a></li>
-      <li class="page-item "><a class="page-link" href="/blog/page/2/index.html" title="blog - page 2">2</a></li>
-      <li class="page-item "><a class="page-link" href="/blog/page/3/index.html" title="blog - page 3">3</a></li>
-      <li class="page-item ">
-      <a class="page-link" href="/blog/page/2/">Older</a>
-    </li>
-  </ul>
-</nav>
+<p>Hence we have</p>
+
+<p>\begin{equation}\label{eqn:IF}
+\phi(P) \approx \phi\left(P^{0}\right)+\mathbb{E}[I F(X)].
+\end{equation}</p>
+
+<hr>
+
+<h3 id="4-intuitive-derivation-of-influence-function">4. Intuitive derivation of influence function</h3>
+
+<p>Suppose we construct the plug-in estimator \(\hat{\phi}=\phi(P_n)\), where \(P_n\) is the empirical distribution</p>
+
+\[P_n=\frac{1}{n}\sum_{i=1}^n\delta_{X_i},\]
+
+<p>then use the <strong>linear property</strong> of the functional, we have</p>
+
+\[\begin{aligned}
+\widehat{\phi} &amp;\approx \phi\left(P^{0}\right)+D \phi\left(P_{n}-P^{0}\right)=\phi\left(P^{0}\right)+\frac{1}{n} \sum_{i=1}^n D \phi\left(\delta_{X_{i}}-P^{0}\right)\\
+&amp;=\phi(P^0)+E_n[D\phi(\delta_{X_i}-P^0)].
+\end{aligned}\]
+
+<p>where \(E_n\) is the sample average. This suggests</p>
+
+\[IF(X)=D\phi(\delta_X-P^0).\]
+
+<hr>
+
+<h3 id="5-how-to-actually-calculate-influence-function">5. How to actually calculate influence function?</h3>
+
+<p>Using directional derivatives: consider families of distributions indexed by a scalar \(\theta\) with \(P(X;\theta)\). Then from \eqref{eqn:IF} we directly have</p>
+
+\[\frac{\partial \phi}{\partial \theta}=\frac{\partial}{\partial\theta}\mathbb{E}[IF(X)]=\int IF(X)\frac{\partial}{\partial\theta}dP(X;\theta).\]
+
+<p>and normalize it to so that \(IF\) has zero mean.</p>
+
+<p><strong>Example.</strong></p>
+
+<ul>
+    <li> 
+        $$
+\phi(P)=\operatorname{Var}(X)=\int X^{2} d P-\left(\int X d P\right)^{2}
+$$
+Then 
+$$
+\begin{aligned}
+\frac{\partial \phi}{\partial \theta}&amp;=\int X^{2} \frac{\partial}{\partial \theta} d P-2\left(\int X d P\right) \int X \frac{\partial}{\partial \theta} dP\\
+&amp;=\int\left(X^{2}-2 E[X] \cdot X\right) \frac{\partial}{\partial \theta} dP
+\end{aligned}
+$$
+Normalize it to get 
+$$
+I F(X)=X^{2}-2 E[X] \cdot X-\operatorname{Var}(X)+E[X]^{2}!
+$$
+   </li>
+
+</ul>
+
+<hr>
+
+<h3 id="6-why-should-we-care-about-influence-function">6. Why should we care about influence function?</h3>
+
+<p>Most importantly, it implies the asymptotic efficiency bound for estimating \(\phi\) is</p>
+
+\[\lim_{n\rightarrow\infty} n\cdot \operatorname{Var}(\hat{\phi})\geq \operatorname{Var}(IF(X)),\]
+
+<p>which provides a powerful alternative when Fisher information style argument is not applicable!</p>
+
+<p>For details see <a href="https://books.google.com/books?hl=en&amp;lr=&amp;id=UEuQEM5RjWgC&amp;oi=fnd&amp;pg=PP19&amp;dq=Asymptotic+statistics.+&amp;ots=mpOFUCd_KB&amp;sig=j0h2_Tt9cXqgycuXYKTLRFwRjNo#v=onepage&amp;q=Asymptotic%20statistics.&amp;f=false" target="\_blank" rel="external nofollow noopener">Asymptotic statistics</a> and <a href="https://books.google.com/books?hl=en&amp;lr=&amp;id=xqZFi2EMB40C&amp;oi=fnd&amp;pg=PR8&amp;dq=Semiparametric+theory+and+missing+data&amp;ots=NG7_acMaHA&amp;sig=leMg2Of1nq4k-VUw2hTrmnv3eMA#v=onepage&amp;q=Semiparametric%20theory%20and%20missing%20data&amp;f=false" target="\_blank" rel="external nofollow noopener">Semiparametric theory and missing data</a>.</p>
+
+<hr>
+
+<h3 id="7-an-application">7. An application</h3>
+
+<p>In Offline Policy Evaluation, the asympototic linear Cramer-Rao lower bound is obtained using Information Function technique for the first time! See Theorem 4.5 of paper <a href="https://arxiv.org/pdf/2102.03607.pdf" target="\_blank" rel="external nofollow noopener">Bootstrapping Statistical Inference for Off-Policy Evaluation</a> for more details.</p>
+
+<hr>
+
+<p>The content of this post mainly comes from <a href="https://scholar.harvard.edu/files/kasy/files/ifhandout.pdf" target="\_blank" rel="external nofollow noopener">this note</a> of Maximilian Kasy.</p>
+
+
+  </article>
 
 </div>
 
@@ -274,7 +251,7 @@
     <!-- Footer -->    
     <footer class="fixed-bottom">
       <div class="container mt-0">
-        &copy; Copyright 2025 Ming  Yin. 
+        © Copyright 2025 Ming  Yin. 
       </div>
     </footer>
 

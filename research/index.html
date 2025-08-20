@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <!-- Head -->
+  <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">    <!-- Metadata, OpenGraph and Schema.org -->
+    
+
+    <!-- Standard metadata -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Research | Ming  Yin</title>
+    <meta name="author" content="Ming  Yin">
+    <meta name="description" content="This page provides the summary of my current research. Check &lt;a href='https://mingyin0312.github.io/publications/'&gt;Publications&lt;/a&gt; page for papers.">
+    <meta name="keywords" content="jekyll, jekyll-theme, academic-website, portfolio-website">
+
+
+    <!-- Bootstrap & MDB -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha256-DF7Zhf293AJxJNTmh5zhoYYIMs2oXitRfBjY+9L//AY=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mdbootstrap@4.20.0/css/mdb.min.css" integrity="sha256-jpjYvU3G3N6nrrBwXJoVEYI/0zw8htfFnhT9ljN3JJw=" crossorigin="anonymous">
+
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/academicons@1.9.1/css/academicons.min.css" integrity="sha256-i1+4qU2G2860dGGIOJscdC30s9beBXjFfzjWLjBRsBg=" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:100,300,400,500,700|Material+Icons">
+
+    <!-- Code Syntax Highlighting -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jwarby/jekyll-pygments-themes@master/github.css" media="" id="highlight_theme_light">
+
+    <!-- Styles -->
+    
+    <link rel="shortcut icon" href="/assets/img/Princeton_seal.png">
+    
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="canonical" href="https://mingyin0312.github.io/research/">
+    
+    <!-- Dark Mode -->
+    
+
+  </head>
+
+  <!-- Body -->
+  <body class="fixed-top-nav ">
+
+    <!-- Header -->
+    <header>
+
+      <!-- Nav Bar -->
+      <nav id="navbar" class="navbar navbar-light navbar-expand-sm fixed-top">
+        <div class="container">
+          <a class="navbar-brand title font-weight-lighter" href="/"><span class="font-weight-bold">Ming </span>Yin</a>
+          <!-- Navbar Toggle -->
+          <button class="navbar-toggler collapsed ml-auto" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar top-bar"></span>
+            <span class="icon-bar middle-bar"></span>
+            <span class="icon-bar bottom-bar"></span>
+          </button>
+
+          <div class="collapse navbar-collapse text-right" id="navbarNav">
+            <ul class="navbar-nav ml-auto flex-nowrap">
+
+              <!-- About -->
+              <li class="nav-item ">
+                <a class="nav-link" href="/">About</a>
+              </li>
+              
+              <!-- Blog -->
+              <li class="nav-item ">
+                <a class="nav-link" href="/blog/">Blog</a>
+              </li>
+
+              <!-- Other pages -->
+              <li class="nav-item ">
+                <a class="nav-link" href="/publications/">Publications</a>
+              </li>
+              <li class="nav-item active">
+                <a class="nav-link" href="/research/">Research<span class="sr-only">(current)</span></a>
+              </li>
+              <li class="nav-item ">
+                <a class="nav-link" href="/teaching/">Teaching/Talks</a>
+              </li>
+              <li class="nav-item ">
+                <a class="nav-link" href="/projects/">Miscellaneous</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Scrolling Progress Bar -->
+      <progress id="progress" value="0">
+        <div class="progress-container">
+          <span class="progress-bar"></span>
+        </div>
+      </progress>
+    </header>
+
+
+    <!-- Content -->
+    <div class="container mt-5">
+      <!-- page.html -->
+        <div class="post">
+
+          <header class="post-header">
+            <h1 class="post-title">Research</h1>
+            <p class="post-description">This page provides the summary of my current research. Check <a href="https://mingyin0312.github.io/publications/">Publications</a> page for papers.</p>
+          </header>
+
+          <article>
+            <hr>
+
+<p><br></p>
+
+<h4 id="theoretical-foundation-for-rl"><strong>Theoretical Foundation for RL</strong></h4>
+
+<p><br></p>
+
+<div class="row text-center">
+    <div class="col-sm mt-3 mt-md-0">
+        <img class="img" src="/assets/img/Research/RL_theory.pdf" alt="" title="RL Foundation" style="width: 700px; height: auto;">
+    </div>
+</div>
+<div class="caption">
+    
+</div>
+
+<p><strong>Reinforcement learning</strong> (RL) has rapidly become one of the fastest-growing fields in machine learning. Over the past decade, RL applications have achieved major breakthroughs, such as defeating world champions in Go and StarCraft II. However, the use of RL in real-world problems remains limited. The main challenge is that most RL methods require interaction with an environment, which is often infeasible in practice due to high costs, and potential legal, ethical, or safety concerns. My research in RL foundation aims to develop efficient RL algorithms that can learn from offline data with low (optimal) sample and computation complexity. There are two main tasks in these two categories: <strong>Offline Policy Learning (OPL)</strong>: learning the optimal strategy for sequential decision-making problems with the logged historical data; <strong>Offline Policy Evaluation (OPE)</strong>: making the counterfactual prediction for the performance of an undeployed strategy using historical data.</p>
+
+<div class="row text-center">
+    <div class="col-sm mt-3 mt-md-0">
+        <img class="img" src="/assets/img/Research/RS1.pdf" alt="" title="OPL" style="width: 300px; height: auto;">
+    </div>
+    <div class="col-sm mt-3 mt-md-0">
+        <img class="img" src="/assets/img/Research/OPE.pdf" alt="" title="OPE" style="width: 310px; height: auto;">
+    </div>
+</div>
+<div class="caption">
+    
+</div>
+
+<p>Additionally, I also provide provable guarantees for online reinforcement learning (RL), where exploration is permitted, as well as for low adaptive RL, which bridges the gap between online and offline RL. I approach these problems from various perspectives, including posterior sampling, adversarial robustness, zero-sum games, and bandit formulations.</p>
+
+<hr>
+
+<p><br></p>
+
+<h4 id="practical-reinforcement-learning"><strong>Practical Reinforcement Learning</strong></h4>
+<p><br></p>
+
+<div class="row text-center">
+    <div class="col-sm mt-3 mt-md-0">
+        <img class="img" src="/assets/img/Research/mujoco.png" alt="" title="mujoco" style="width: 141px; height: auto;">
+    </div>
+    <div class="col-sm mt-3 mt-md-0">
+        <img class="img" src="/assets/img/Research/atari.jpg" alt="" title="atari" style="width: 218px; height: auto;">
+    </div>
+    <div class="col-sm mt-3 mt-md-0">
+        <img class="img-" src="/assets/img/Research/networkgym.png" alt="" title="networkgym" style="width: 350px; height: auto;">
+    </div>
+</div>
+<div class="caption">
+    
+</div>
+
+<p>To move from foundation to practice, I also study how to develop principled methodologies to make Reinforcement Learning effective for practical applications. My work has successfully applied RL algorithms to physics-based robotics simulators, computer games, and internet network management problems.</p>
+
+<p>For multi-access network traffic management, our pessimism-based algorithm outperforms existing state-of-the-art deep RL methods in the high-fidelity  <a href="https://ersp.cs.ucsb.edu/2020-2021-projects/group-4-20202021" rel="external nofollow noopener" target="_blank">NetworkGym</a> environment, which simulates multiple network traffic flows and multi-access traffic splitting. In offline RL, we introduced the <a href="http://proceedings.mlr.press/v202/li23av/li23av.pdf" rel="external nofollow noopener" target="_blank">Closed-Form Policy Improvement Operator</a>, which updates policies using a closed-form solution rather than traditional gradient descent, and it has proven competitive with leading RL methods in MuJoCo robotic simulators. Additionally, we reformulated the value function learning problem as a <a href="https://assets.amazon.science/8d/22/9dcd6e48482d800c30c654194e51/learning-the-target-network-in-function-space.pdf" rel="external nofollow noopener" target="_blank">target network learning</a> problem, yielding empirical improvements on Atari games.</p>
+
+<hr>
+
+<p><br></p>
+
+<h4 id="llm-alignment-meets-sequential-decision-making-theory-and-practice"><strong>LLM Alignment meets Sequential Decision-making: Theory and Practice</strong></h4>
+
+<div class="row text-center">
+    <div class="col-sm mt-3 mt-md-0">
+        <img class="img" src="/assets/img/Research/auto.pdf" alt="" title="mujoco" style="width: 320px; height: auto;">
+    </div>
+    <div class="col-sm mt-3 mt-md-0">
+        <img class="img" src="/assets/img/Research/spec_new.pdf" alt="" title="atari" style="width: 350px; height: auto;">
+    </div>
+</div>
+<div class="caption">
+    Standard Auto-Regressive Decoding (Left) vs. Speculative Decoding (Right)
+</div>
+
+<p><br></p>
+
+<p>The Theoretical understanding of Large Language models lags far behind its empirical successes. I make an effort by studying <strong>speculative decoding</strong>, a popular decoding method that has been deployed in many real-world products and achieves a 2-2.5X LLM inference speedup while preserving the quality of the outputs. I conceptualize the decoding problem via Markov chain abstraction and study the theoretical characterization of the key properties, output quality, and inference acceleration. <a href="http://" rel="external nofollow noopener" target="_blank">The analysis</a> covers the theoretical limits of speculative decoding, batch algorithms, and output quality-inference acceleration tradeoffs. It uncovers fundamental connections within LLMs through total variation distances, showing how these components interact to impact the efficiency of decoding algorithms.</p>
+
+<div class="row text-center">
+    <div class="col-sm mt-3 mt-md-0">
+        <img class="img" src="/assets/img/Research/transfer_q.png" alt="" title="mujoco" style="width: 320px; height: auto;">
+    </div>
+    <div class="col-sm mt-3 mt-md-0">
+        <img class="img" src="/assets/img/Research/cd_tq.jpg" alt="" title="atari" style="width: 250px; height: auto;">
+    </div>
+</div>
+<div class="caption">
+
+</div>
+
+<p><br></p>
+
+<p><strong>Alignment</strong> for large language models (LLMs) is essential to ensure that these models behave in ways that are safe, ethical, and aligned with human values and intentions. Given a reward model and an LLM to be aligned, alignment can be cast as a (sparse) Reinforcement Learning problem.  Ideally, a principled decoding method would use the optimal Q* function, but this function is unknown. The prior method estimates Q* by Q-SFT, and our method estimates the correct Q* function via the <a href="https://arxiv.org/pdf/2405.20495" rel="external nofollow noopener" target="_blank">Transfer procedure</a>.</p>
+
+<hr>
+
+<p><br></p>
+
+<h4 id="evaluation--benchmarks-for-generative-ai"><strong>Evaluation &amp; Benchmarks for Generative AI</strong></h4>
+
+<p><br></p>
+
+<div class="row text-center">
+    <div class="col-sm mt-3 mt-md-0">
+        <img class="img" src="/assets/img/Research/MMMU1.png" alt="" title="mujoco" style="width: 720px; height: auto;">
+    </div>
+</div>
+<div class="caption">
+MMMU: A Massive Multi-discipline Multimodal Understanding and Reasoning Benchmark for Expert AGI
+</div>
+
+<p>Measuring the performance of generative AI models is challenging since their outputs are subjective, open-ended, and lack clear ground truth, requiring evaluation across multiple dimensions such as relevance, coherence, and diversity. This becomes even more complex in multimodal evaluations, where tasks involve various formats such as images and text. In collaboration with other researchers, we created <a href="https://openaccess.thecvf.com/content/CVPR2024/papers/Yue_MMMU_A_Massive_Multi-discipline_Multimodal_Understanding_and_Reasoning_Benchmark_for_CVPR_2024_paper.pdf" rel="external nofollow noopener" target="_blank">MMMU</a>, a benchmark designed to evaluate expert-level multimodal understanding and reasoning across six diverse disciplines and over 30 subjects. <strong>My contribution:</strong> I contributed 400 carefully curated multimodal questions to a total of 11.5K questions in the benchmark.</p>
+
+<!-- MMMU has been the go-to-evaluation Benchmark for evaluating model's multimodal capabilities, examples include Gemini, GPT-4o, Claude 3, and LLama 3.2.   -->
+
+<div class="row text-center">
+    <div class="col-sm mt-3 mt-md-0">
+        <img class="img" src="/assets/img/Research/theoremqa.png" alt="" title="mujoco" style="width: 720px; height: auto;">
+    </div>
+    <!-- <div class="col-sm mt-3 mt-md-0">
+        <img class="img" src="/assets/img/Research/MMMU2.png" alt="" title="atari"  />
+    </div> -->
+</div>
+<div class="caption">
+    TheoremQA: A Theorem-driven Question Answering Dataset
+</div>
+
+<p>Recent large language models (LLMs), such as GPT-4, have made significant progress in solving fundamental math problems like those in GSM8K, achieving over 90% accuracy. However, their ability to tackle more complex problems that require domain-specific knowledge, such as applying theorems, remains underexplored. To address this, we developed <a href="https://aclanthology.org/2023.emnlp-main.489.pdf" rel="external nofollow noopener" target="_blank">TheoremQA</a>, the first theorem-driven question-answering dataset aimed at evaluating AI models’ ability to apply theorems to solve advanced science problems. <strong>My contribution:</strong> I curated nearly 100 college-level math competition questions to a total of 800 questions in the dataset.</p>
+
+<hr>
+
+<p><br></p>
+
+<h4 id="ai-for-science--engineering"><strong>AI for Science &amp; Engineering</strong></h4>
+
+<p><br></p>
+
+<div class="row text-center">
+    <div class="col-sm mt-3 mt-md-0">
+        <img class="img" src="/assets/img/Research/crispr.png" alt="" title="mujoco" style="width: 250px; height: auto;">
+    </div>
+    <div class="col-sm mt-3 mt-md-0">
+        <img class="img" src="/assets/img/Research/CrisprGpt.png" alt="" title="atari" style="width: 450px; height: auto;">
+    </div>
+</div>
+<div class="caption">
+    
+</div>
+
+<p>Genome engineering technology has revolutionized biomedical research by enabling precise genetic modifications. One exciting example is the CRISPR technology, which can be used to develop critical advances in patient care or even cure lifelong inherited diseases. This technology won the 2020 Nobel Prize in Chemistry. In assisting beginner researchers with gene-editing from scratch, we designed CRISPR-GPT, an LLM agent system to automate and enhance the CRISPR-based gene-editing design process. This system is driven by multi-agent collaboration, and it incorporates domain expertise, retrieval techniques, and external tools. I contributed to CRISPR-GPT by fine-tuning a specialized LLM with a decade’s worth of open-forum discussions among gene-editing scientists.</p>
+
+<!-- However, designing effective gene-editing experiments requires a deep understanding of both the CRISPR technology and the biological system involved. Meanwhile, despite their versatility and promise, Large Language Models (LLMs) often lack domain-specific knowledge and struggle to accurately solve biological design problems. In this work, we present CRISPR-GPT, an LLM agent system to automate and enhance the CRISPR-based gene-editing design process. CRISPR-GPT leverages the reasoning capabilities of LLMs for complex task decomposition, decision-making, and interactive human-AI collaboration. This system is driven by multi-agent collaboration, and it incorporates domain expertise, retrieval techniques, external tools, and a specialized LLM fine-tuned with a decade’s worth of open-forum discussions among gene-editing scientists. CRISPR-GPT assists users in selecting CRISPR systems, experiment planning, designing gRNAs, choosing delivery methods, drafting protocols, designing assays, and analyzing data. We showcase the potential of CRISPR-GPT in assisting beginner researchers with gene-editing from scratch, knocking-out four genes with CRISPR-Cas12a in a human lung adenocarcinoma cell line and epigenetically activating two genes using CRISPR-dCas9 in human melanoma cell line, both successful on first attempt. CRISPR-GPT enabled fully AI-guided gene-editing experiment design across different modalities, validating its effectiveness as an AI co-pilot in genome engineering. -->
+
+
+          </article>
+
+        </div>
+
+    </div>
+
+    <!-- Footer -->    
+    <footer class="fixed-bottom">
+      <div class="container mt-0">
+        © Copyright 2025 Ming  Yin. 
+      </div>
+    </footer>
+
+    <!-- JavaScripts -->
+    <!-- jQuery -->
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+
+    <!-- Bootsrap & MDB scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js" integrity="sha256-fgLAgv7fyCGopR/gBNq2iW3ZKIdqIcyshnUULC4vex8=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mdbootstrap@4.20.0/js/mdb.min.js" integrity="sha256-NdbiivsvWt7VYCt6hYNT3h/th9vSTL4EDWeGs5SN3DA=" crossorigin="anonymous"></script>
+
+    <!-- Masonry & imagesLoaded -->
+  <script defer src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js" integrity="sha256-Nn1q/fx0H7SNLZMQ5Hw5JLaTRZp0yILA/FRexe19VdI=" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/imagesloaded@4/imagesloaded.pkgd.min.js"></script>
+  <script defer src="/assets/js/masonry.js" type="text/javascript"></script>
+    
+  <!-- Medium Zoom JS -->
+  <script defer src="https://cdn.jsdelivr.net/npm/medium-zoom@1.0.6/dist/medium-zoom.min.js" integrity="sha256-EdPgYcPk/IIrw7FYeuJQexva49pVRZNmt3LculEr7zM=" crossorigin="anonymous"></script>
+  <script defer src="/assets/js/zoom.js"></script><!-- Load Common JS -->
+  <script defer src="/assets/js/common.js"></script>
+
+    <!-- MathJax -->
+  <script type="text/javascript">
+    window.MathJax = {
+      tex: {
+        tags: 'ams'
+      }
+    };
+  </script>
+  <script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-chtml.js"></script>
+  <script defer src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-9NJFB4PFB4"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ window.dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-9NJFB4PFB4');
+  </script>
+    
+
+<!-- Scrolling Progress Bar -->
+<script type="text/javascript">
+  /*
+   * This JavaScript code has been adapted from the article 
+   * https://css-tricks.com/reading-position-indicator/ authored by Pankaj Parashar, 
+   * published on the website https://css-tricks.com on the 7th of May, 2014.
+   * Couple of changes were made to the original code to make it compatible 
+   * with the `al-foio` theme.
+   */
+  const progressBar = $("#progress");
+  /*
+   * We set up the bar after all elements are done loading.
+   * In some cases, if the images in the page are larger than the intended
+   * size they'll have on the page, they'll be resized via CSS to accomodate
+   * the desired size. This mistake, however, breaks the computations as the
+   * scroll size is computed as soon as the elements finish loading.
+   * To account for this, a minimal delay was introduced before computing the
+   * values.
+   */
+  window.onload = function () {
+    setTimeout(progressBarSetup, 50);
+  };
+  /*
+   * We set up the bar according to the browser.
+   * If the browser supports the progress element we use that.
+   * Otherwise, we resize the bar thru CSS styling
+   */
+  function progressBarSetup() {
+    if ("max" in document.createElement("progress")) {
+      initializeProgressElement();
+      $(document).on("scroll", function() {
+        progressBar.attr({ value: getCurrentScrollPosition() });
+      });
+      $(window).on("resize", initializeProgressElement);
+    } else {
+      resizeProgressBar();
+      $(document).on("scroll", resizeProgressBar);
+      $(window).on("resize", resizeProgressBar);
+    }
+  }
+  /*
+   * The vertical scroll position is the same as the number of pixels that
+   * are hidden from view above the scrollable area. Thus, a value > 0 is
+   * how much the user has scrolled from the top
+   */
+  function getCurrentScrollPosition() {
+    return $(window).scrollTop();
+  }
+
+  function initializeProgressElement() {
+    let navbarHeight = $("#navbar").outerHeight(true);
+    $("body").css({ "padding-top": navbarHeight });
+    $("progress-container").css({ "padding-top": navbarHeight });
+    progressBar.css({ top: navbarHeight });
+    progressBar.attr({
+      max: getDistanceToScroll(),
+      value: getCurrentScrollPosition(),
+    });
+  }
+  /*
+   * The offset between the html document height and the browser viewport
+   * height will be greater than zero if vertical scroll is possible.
+   * This is the distance the user can scroll
+   */
+  function getDistanceToScroll() {
+    return $(document).height() - $(window).height();
+  }
+
+  function resizeProgressBar() {
+    progressBar.css({ width: getWidthPercentage() + "%" });
+  }
+  // The scroll ratio equals the percentage to resize the bar
+  function getWidthPercentage() {
+    return (getCurrentScrollPosition() / getDistanceToScroll()) * 100;
+  }
+</script>
+
+  </body>
+</html>
