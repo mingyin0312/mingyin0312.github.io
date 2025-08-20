@@ -64,7 +64,7 @@ og_image: # The site-wide (default for all links) Open Graph preview image
 # Social integration
 # -----------------------------------------------------------------------------
 
-github_username: #mingyin0312 # your GitHub user name
+github_username: mingyin0312 # your GitHub user name
 gitlab_username: # your GitLab user name
 twitter_username: MingYin_0312 # your Twitter handle
 mastodon_username: # your mastodon instance+username in the format instance.tld/@username
@@ -150,6 +150,9 @@ news_limit: 100 # leave blank to include all the news in the `_news` folder
 # Jekyll settings
 # -----------------------------------------------------------------------------
 
+
+
+
 # Markdown and syntax highlight
 markdown: kramdown
 highlighter: rouge
@@ -182,7 +185,6 @@ plugins:
   - jekyll-email-protect
   - jekyll-feed
   - jekyll-imagemagick
-  - jekyll-minifier
   - jekyll-paginate-v2
   - jekyll/scholar
   - jekyll-sitemap
@@ -201,10 +203,10 @@ plugins:
 # Jekyll Minifier
 # -----------------------------------------------------------------------------
 
-jekyll-minifier:
-  exclude: ['robots.txt']
-  uglifier_args:
-    harmony: true
+# jekyll-minifier:
+#   exclude: ['robots.txt']
+#   uglifier_args:
+#     harmony: true
 
 # -----------------------------------------------------------------------------
 # Jekyll Archives
