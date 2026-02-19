@@ -1,7 +1,7 @@
 ---
 layout: page
 permalink: /teaching/
-title: Teaching/Talks  
+title: Talks  
 description: Events in reversed chronological order.
 nav: true
 ---
@@ -161,7 +161,7 @@ Our MMMU dataset is covered by <a href="https://aiindex.stanford.edu/wp-content/
 
 
 
-
+<!-- 
 
 ***
 
@@ -223,7 +223,7 @@ I am mentoring an undergraduate team of 4 students of Early Research Scholar Pro
 
 
 
-
+ -->
 
 
 
