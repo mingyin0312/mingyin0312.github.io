@@ -1,19 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
-
-  <!-- Head -->
+<!-- _layouts/distill.html --><html>
   <head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta http-equiv="refresh" content="3; url=/">    <!-- Metadata, OpenGraph and Schema.org -->
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">    <!-- Metadata, OpenGraph and Schema.org -->
     
 
     <!-- Standard metadata -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Page not found | Ming  Yin</title>
+    <title>TMIS (Plug-in) estimator is statistically efficient for Tabular OPE | Ming  Yin</title>
     <meta name="author" content="Ming  Yin">
-    <meta name="description" content="Looks like there has been a mistake. Nothing exists here.">
+    <meta name="description" content="Surprisingly, Monte Carlo on-policy estimator is actually statistically inefficient.">
     <meta name="keywords" content="jekyll, jekyll-theme, academic-website, portfolio-website">
 
 
@@ -34,15 +31,70 @@
     <link rel="shortcut icon" href="/assets/img/Princeton_seal.png">
     
     <link rel="stylesheet" href="/assets/css/main.css">
-    <link rel="canonical" href="https://mingyin0312.github.io/404.html">
+    <link rel="canonical" href="https://mingyin0312.github.io/blog/2021/TMIS/">
     
     <!-- Dark Mode -->
     
 
+
+    <!-- jQuery -->
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+
+    <!-- MathJax -->
+  <script type="text/javascript">
+    window.MathJax = {
+      tex: {
+        tags: 'ams'
+      }
+    };
+  </script>
+  <script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-chtml.js"></script>
+  <script defer src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+
+    <!-- Distill js -->
+    <script src="/assets/js/distillpub/template.v2.js"></script>
+    <script src="/assets/js/distillpub/transforms.v2.js"></script>
+    <script src="/assets/js/distillpub/overrides.js"></script>
+    
   </head>
 
-  <!-- Body -->
-  <body class="fixed-top-nav ">
+  <body>
+<d-front-matter>
+    <script async type="text/json">{
+      "title": "TMIS (Plug-in) estimator is statistically efficient for Tabular OPE",
+      "description": "Surprisingly, Monte Carlo on-policy estimator is actually statistically inefficient.",
+      "published": "February 28, 2021",
+      "authors": [
+        {
+          "author": "Ming Yin",
+          "authorURL": "",
+          "affiliations": [
+            {
+              "name": "CS, UCSB",
+              "url": ""
+            }
+          ]
+        }
+        
+      ],
+      "katex": {
+        "delimiters": [
+          {
+            "left": "$",
+            "right": "$",
+            "display": false
+          },
+          {
+            "left": "$$",
+            "right": "$$",
+            "display": true
+          }
+        ]
+      }
+    }</script>
+  </d-front-matter>
+
+  
 
     <!-- Header -->
     <header>
@@ -68,8 +120,8 @@
               </li>
               
               <!-- Blog -->
-              <li class="nav-item ">
-                <a class="nav-link" href="/blog/">Blog</a>
+              <li class="nav-item active">
+                <a class="nav-link" href="/blog/">Blog<span class="sr-only">(current)</span></a>
               </li>
 
               <!-- Other pages -->
@@ -100,22 +152,80 @@
 
 
     <!-- Content -->
-    <div class="container mt-5">
-      <!-- page.html -->
-        <div class="post">
+    <div class="post distill">
 
-          <header class="post-header">
-            <h1 class="post-title">Page not found</h1>
-            <p class="post-description">Looks like there has been a mistake. Nothing exists here.</p>
-          </header>
+      <d-title>
+        <h1>TMIS (Plug-in) estimator is statistically efficient for Tabular OPE</h1>
+        <p>Surprisingly, Monte Carlo on-policy estimator is actually statistically inefficient.</p>
+      </d-title>
 
-          <article>
-            <p>You will be redirected to the main page within 3 seconds. If not redirected, please click <a href="/">here</a>.</p>
+      <d-byline></d-byline>
 
-          </article>
+      <d-article>
+        
 
-        </div>
+        <h2 id="brief-background-of-ope">Brief background of OPE</h2>
 
+<p>Historical data \(\mathcal{D}=\left\lbrace (s_t^{(i)},a_t^{(i)},r_t^{(i)})\right\rbrace_{i\in[n]}^{t\in[H]}\) was obtained by logging policy \(\mu\) and we can only use \(\mathcal{D}\) to estimate the value of target policy \(\pi\), <em>i.e.</em> \(v^\pi\). Suppose we only assume knowledge about \(\pi\) and <em>do not observe</em> \(r_t(s_t,a_t)\) for any actions other than the noisy immediate reward \(r_t^{(i)}\) after observing \(s_t^{(i)},a_t^{(i)}\). The goal is to find an estimator to minimize the mean-square error (MSE):</p>
+
+\[MSE(\pi,\mu,M)=\mathbb{E}_\mu[(\hat{v}^\pi-v^\pi)^2]\]
+
+<p>It is known from Theorem 3 of <d-cite key="jiang2016doubly"></d-cite> that for discrete DAG MDPs, the variance of any unbiased estimator is lower bounded by<d-footnote>The randomness is taken over $s_t,a_t,r_t$ for expectation.</d-footnote></p>
+
+\[\sum_{t=0}^{H}\mathbb{E}_\mu\left[ \frac{d^\pi(s_t,a_t)^2}{d^\mu(s_t,a_t)^2}\mathrm{Var}\Big[V_{t+1}^\pi(s_{t+1})+r_t\Big| s_{t}, a_t\Big]\right].\]
+
+<hr>
+
+<h2 id="tabular-mis-estimator-is-statistically-efficient">Tabular MIS estimator is statistically efficient</h2>
+
+<p>Follow (Yin &amp; Wang, 2020) <d-cite key="yin2020asymptotically"></d-cite>, Tabular MIS $\hat{v}^\pi_\text{TMIS}$ estimats</p>
+
+\[\widehat{P}_{t+1}(s_{t+1}|s_{t},a_{t})=\frac{\sum_{i=1}^n\mathbf{1}[(s^{(i)}_{t+1},a^{(i)}_t,s^{(i)}_t)=(s_{t+1},s_{t},a_{t})]}{n_{s_{t},a_{t}}};
+\widehat{r}_t(s_t,a_t)=\frac{\sum_{i=1}^n r_t^{(i)}\mathbf{1}[(s^{(i)}_t,a^{(i)}_t)=(s_t,a_t)]}{n_{s_t,a_t}},\]
+
+<p>which results in (Theorem 3.1. in  <d-cite key="yin2020asymptotically"></d-cite>)</p>
+
+\[\mathbb{E}[ (\hat{v}_{\mathrm{TMIS}}^\pi -  v^\pi)^2]\leq \frac{1}{n}\sum_{t=0}^{H}\mathbb{E}_\mu\left[ \frac{d^\pi(s_t,a_t)^2}{d^\mu(s_t,a_t)^2}\mathrm{Var}\Big[V_{t+1}^\pi(s_{t+1})+r_t\Big| s_{t}, a_t\Big]\right]+O(\cdot),\]
+
+<p>where $O(\cdot)$ is a higher order term. This further implies</p>
+
+\[\lim_{n\rightarrow\infty} n\cdot \mathbb{E}[ (\hat{v}_{\mathrm{TMIS}}^\pi -  v^\pi)^2]=\sum_{t=0}^{H}\mathbb{E}_\mu\left[ \frac{d^\pi(s_t,a_t)^2}{d^\mu(s_t,a_t)^2}\mathrm{Var}\Big[V_{t+1}^\pi(s_{t+1})+r_t\Big| s_{t}, a_t\Big]\right].\]
+
+<p>Therefore TMIS is statistically efficient as it matches the lower bound given by <d-cite key="jiang2016doubly"></d-cite>.</p>
+
+<hr>
+
+<h2 id="monte-carlo-on-policy-estimator-is-statistically-inefficient">Monte Carlo on-policy estimator is statistically inefficient!</h2>
+
+<p>To understand this, note on-policy estimator uses</p>
+
+\[\hat{v}^\pi_\textbf{on}=\frac{1}{n}\sum_{t=0}^H\sum_{i=1}^n r_t^{(i)},\]
+
+<p>and the variance of $
+\hat{v}^\pi_\textbf{on}$ becomes (by Lemma 3.4 of <d-cite key="yin2020asymptotically"></d-cite>)</p>
+
+\[\frac{1}{n}\mathrm{Var}\left[\sum_{t=0}^H r_t\right]= \frac{1}{n}\sum_{t=1}^H \Big(\mathbb{E}_\pi\left[ \mathrm{Var}\left[r_t+V^\pi_{t+1}(s_{t+1}) \middle|s_t,a_t\right] \right]
++  \mathbb{E}_\pi\left[ \mathrm{Var}\left[  \mathbb{E}_\pi[r_t+V^\pi_{t+1}(s_{t+1}) | s_t, a_t]  \middle|s_t\right] \right]\Big).\]
+
+<p>Hence the asymptotic variance of $
+\hat{v}^\pi_\textbf{on}$ has</p>
+
+\[\lim_{n\rightarrow\infty} n\cdot \mathrm{Var}(\hat{v}^\pi_\textbf{on})= \sum_{t=1}^H \Big(\mathbb{E}_\pi\left[ \mathrm{Var}\left[r_t+V^\pi_{t+1}(s_{t+1}) \middle|s_t,a_t\right] \right]
++  \mathbb{E}_\pi\left[ \mathrm{Var}\left[  \mathbb{E}_\pi[r_t+V^\pi_{t+1}(s_{t+1}) | s_t, a_t]  \middle|s_t\right] \right]\Big).\]
+
+<p>which is greater than the on-policy ($\pi=\mu$) lower bound</p>
+
+\[\sum_{t=0}^{H}\mathbb{E}_\pi\left[ \mathrm{Var}\Big[V_{t+1}^\pi(s_{t+1})+r_t\Big| s_{t}, a_t\Big]\right]!\]
+
+
+      </d-article>
+
+      <d-appendix>
+        <d-footnote-list></d-footnote-list>
+        <d-citation-list></d-citation-list>
+      </d-appendix>
+
+      <d-bibliography src="/assets/bibliography/TMIS-distill.bib"></d-bibliography>
     </div>
 
     <!-- Footer -->    
@@ -125,34 +235,9 @@
       </div>
     </footer>
 
-    <!-- JavaScripts -->
-    <!-- jQuery -->
-  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
-
     <!-- Bootsrap & MDB scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js" integrity="sha256-fgLAgv7fyCGopR/gBNq2iW3ZKIdqIcyshnUULC4vex8=" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/mdbootstrap@4.20.0/js/mdb.min.js" integrity="sha256-NdbiivsvWt7VYCt6hYNT3h/th9vSTL4EDWeGs5SN3DA=" crossorigin="anonymous"></script>
-
-    <!-- Masonry & imagesLoaded -->
-  <script defer src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js" integrity="sha256-Nn1q/fx0H7SNLZMQ5Hw5JLaTRZp0yILA/FRexe19VdI=" crossorigin="anonymous"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/imagesloaded@4/imagesloaded.pkgd.min.js"></script>
-  <script defer src="/assets/js/masonry.js" type="text/javascript"></script>
-    
-  <!-- Medium Zoom JS -->
-  <script defer src="https://cdn.jsdelivr.net/npm/medium-zoom@1.0.6/dist/medium-zoom.min.js" integrity="sha256-EdPgYcPk/IIrw7FYeuJQexva49pVRZNmt3LculEr7zM=" crossorigin="anonymous"></script>
-  <script defer src="/assets/js/zoom.js"></script><!-- Load Common JS -->
-  <script defer src="/assets/js/common.js"></script>
-
-    <!-- MathJax -->
-  <script type="text/javascript">
-    window.MathJax = {
-      tex: {
-        tags: 'ams'
-      }
-    };
-  </script>
-  <script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-chtml.js"></script>
-  <script defer src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
 
     <!-- Global site tag (gtag.js) - Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-9NJFB4PFB4"></script>
@@ -241,5 +326,6 @@
   }
 </script>
 
-  </body>
+  
+</body>
 </html>
